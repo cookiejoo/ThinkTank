@@ -1,0 +1,19 @@
+[
+  {
+    "name": "通用平台",
+    "projects": []
+  },
+  {
+    "name": "示例项目",
+    "projects": [
+      "thinktank"
+    ]
+  },
+  {
+    "name": "内部项目",
+    "projects": [
+      "test-visibility-project",
+      "My-Git-Project"
+    ]
+  }
+]

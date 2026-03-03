@@ -1,0 +1,13 @@
+{
+  "description": "Project documentation for general-scheduler",
+  "mode": "git",
+  "createdAt": "2025-05-23T10:00:00.000Z",
+  "files": {},
+  "gitConfig": {
+    "repoUrl": "https://gitlab.daikuan.qihoo.net/jinke-ai/jone-plugins.git",
+    "token": "1bfd06afef77c70060a74b3b922298b5:f091fe0203ef59f4877821a923486f6ffefea69a0e3552dbe73a08c39cbfd0b9",
+    "branch": "master",
+    "rootPath": "/docs/articles",
+    "syncInterval": 20
+  }
+}

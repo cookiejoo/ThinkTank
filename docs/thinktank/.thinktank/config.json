@@ -1,0 +1,29 @@
+{
+  "description": "thinktank的项目介绍",
+  "mode": "edit",
+  "createdAt": "2026-02-19T13:48:04.760Z",
+  "files": {
+    "/api": {
+      "sortOrder": 0
+    },
+    "/architecture": {
+      "sortOrder": 1
+    },
+    "/deployment": {
+      "sortOrder": 2
+    },
+    "/development": {
+      "sortOrder": 3
+    },
+    "/features": {
+      "sortOrder": 4
+    },
+    "/getting-started": {
+      "sortOrder": 5
+    },
+    "/README.md": {
+      "sortOrder": 6
+    }
+  },
+  "isDeleted": false
+}

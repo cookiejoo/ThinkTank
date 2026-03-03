@@ -1,0 +1,36 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "passwordHash": "$2b$10$7wfcX9s66eKAV.d5jFh5/OOZZ/yVRWPM8o/PeTO3omFvDxJoz0Bxa",
+    "role": "admin",
+    "accessibleProjects": []
+  },
+  {
+    "id": "2",
+    "username": "user1",
+    "passwordHash": "$2b$10$7wfcX9s66eKAV.d5jFh5/OOZZ/yVRWPM8o/PeTO3omFvDxJoz0Bxa",
+    "role": "user",
+    "accessibleProjects": [
+      "project-a",
+      "test-visibility-project",
+      "project-b"
+    ]
+  },
+  {
+    "id": "3",
+    "username": "user2",
+    "passwordHash": "$2b$10$7wfcX9s66eKAV.d5jFh5/OOZZ/yVRWPM8o/PeTO3omFvDxJoz0Bxa",
+    "role": "user",
+    "accessibleProjects": [
+      "sentinel"
+    ]
+  },
+  {
+    "id": "1771318185703",
+    "username": "admin2",
+    "passwordHash": "$2b$10$7wfcX9s66eKAV.d5jFh5/OOZZ/yVRWPM8o/PeTO3omFvDxJoz0Bxa",
+    "role": "admin",
+    "accessibleProjects": []
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "description": "测试项目",
+  "mode": "git",
+  "gitConfig": {
+    "repoUrl": "https://gitee.com/cookiejoo/Sentinel.git",
+    "branch": "master",
+    "rootPath": "/doc",
+    "token": "58aedbfa9b8be09c3808132dfeb60777:ccfdfc3c2adad1abad53ddd49e20fd9f16bca1c5f7ade1122920125ff92884dda7687a51ffb722cf02d7a7f45c8be768",
+    "syncInterval": 1
+  },
+  "createdAt": "2026-02-19T16:30:14.231Z",
+  "files": {},
+  "isDeleted": false
+}
