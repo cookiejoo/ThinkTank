@@ -12,6 +12,8 @@ import {
   Settings,
   MoreHorizontal,
   Plus,
+  FilePlus,
+  FolderPlus,
   Eye,
   EyeOff,
   Trash2,
@@ -36,6 +38,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface TreeNode {
   id: string;
@@ -102,6 +105,7 @@ export function Sidebar({
 
   const currentTheme = themeColors[theme];
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [contextMenuNodeId, setContextMenuNodeId] = useState<string | null>(null);
   const treeApiRef = useRef<TreeApi<TreeNode>>(null);
   const [treeLoaded, setTreeLoaded] = useState(false);
 
@@ -175,6 +179,7 @@ export function Sidebar({
   // Dialog States
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createInput, setCreateInput] = useState('');
+  const [createType, setCreateType] = useState<'file' | 'folder'>('file');
   
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [renameInput, setRenameInput] = useState('');
@@ -379,8 +384,9 @@ export function Sidebar({
       }
   };
 
-  const handleCreate = async (parentNode?: any) => {
+  const handleCreate = async (type: 'file' | 'folder', parentNode?: any) => {
       setTargetNode(parentNode || null);
+      setCreateType(type);
       setCreateInput('');
       setCreateDialogOpen(true);
   };
@@ -388,8 +394,11 @@ export function Sidebar({
   const submitCreate = async () => {
       if (!createInput.trim()) return;
 
-      const input = createInput.trim();
-      const isDir = !input.endsWith('.md');
+      let input = createInput.trim();
+      const isDir = createType === 'folder';
+      if (!isDir && !input.endsWith('.md')) {
+          input += '.md';
+      }
       
       let parentPath = '';
       if (targetNode) {
@@ -452,7 +461,13 @@ export function Sidebar({
 
   const Node = ({ node, style, dragHandle }: any) => {
     const isFile = !node.isInternal;
-    const isSelected = node.id === activeId;
+    
+    // Determine if this specific node should be highlighted
+    const isContextMenuActive = contextMenuNodeId !== null;
+    const isSelected = isContextMenuActive 
+      ? node.id === contextMenuNodeId // Only highlight the right-clicked node if a menu is open
+      : node.id === activeId;         // Otherwise, highlight the actively selected file
+
     const isStarred = node.data.isStarred;
 
     const iconColor = isSelected ? currentTheme.iconActive : "text-gray-500";
@@ -461,8 +476,8 @@ export function Sidebar({
     const hoverText = isSelected ? '' : currentTheme.hoverText;
 
     return (
-      <ContextMenu>
-        <ContextMenuTrigger disabled={readOnly && !session}>
+      <ContextMenu onOpenChange={(open) => setContextMenuNodeId(open ? node.id : null)}>
+        <ContextMenuTrigger disabled={readOnly && !session} asChild>
             <div
                 ref={dragHandle}
                 style={style}
@@ -472,6 +487,10 @@ export function Sidebar({
                     hoverBg,
                     !node.data.isVisible && 'italic text-gray-400'
                 )}
+                onContextMenu={() => {
+                    // Update state to force a re-render for visual highlight BEFORE Radix context menu opens
+                    setContextMenuNodeId(node.id);
+                }}
                 onClick={() => {
                     if (node.isInternal) {
                         node.toggle();
@@ -496,6 +515,8 @@ export function Sidebar({
             </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
+            {node.isInternal && !readOnly && <ContextMenuItem onClick={() => handleCreate('file', node)}>New File</ContextMenuItem>}
+            {node.isInternal && !readOnly && <ContextMenuItem onClick={() => handleCreate('folder', node)}>New Folder</ContextMenuItem>}
             {session && <ContextMenuItem onClick={() => handleToggleStar(node)}> {isStarred ? 'Unstar' : 'Star'} </ContextMenuItem>}
             {!readOnly && <ContextMenuItem onClick={() => handleToggleVisibility(node)}> {node.data.isVisible === false ? 'Show' : 'Hide'} </ContextMenuItem>}
             {!readOnly && <ContextMenuItem onClick={() => handleRename(node)}>Rename</ContextMenuItem>}
@@ -514,122 +535,155 @@ export function Sidebar({
   };
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r bg-gray-50 flex flex-col h-full">
-      <div className="p-3 flex items-center justify-between border-b h-[53px]">
-        <div className="flex items-center">
-            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mr-2", currentTheme.avatarBg)}>
-                <span className={cn("font-bold text-lg", currentTheme.avatarText)}>{projectId.charAt(0).toUpperCase()}</span>
-            </div>
-            <h2 className="font-bold text-lg text-gray-800 truncate">{projectId}</h2>
-        </div>
-        <Link href={backHref} className="text-gray-500 hover:text-gray-800">
-            <ArrowLeft size={20} />
-        </Link>
-      </div>
-
-      <nav className="p-2">
-        <NavItem icon={Home} label="Home" isActive={activeNav === 'home'} onClick={() => handleNavClick('home')} theme={currentTheme} />
-        <NavItem icon={Search} label="Search" isActive={activeNav === 'search'} onClick={() => handleNavClick('search')} theme={currentTheme} />
-        {session && <NavItem icon={Star} label="Starred" isActive={activeNav === 'starred'} onClick={() => handleNavClick('starred')} theme={currentTheme} />}
-        {theme !== 'emerald' && session && (session.user.role === 'admin' || !readOnly) && <NavItem icon={Settings} label="Settings" isActive={activeNav === 'settings'} onClick={() => handleNavClick('settings')} theme={currentTheme} />}
-      </nav>
-
-      <div className="px-3 mb-2 mt-2 flex justify-between items-center">
-        <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Files</h3>
-        {!readOnly && (
-            <button onClick={() => handleCreate()} className="text-gray-400 hover:text-gray-700">
-                <Plus size={16} />
-            </button>
-        )}
-      </div>
-
-      <div ref={treeContainerRef} className="flex-grow px-2 pb-4 overflow-y-auto overflow-x-hidden">
-        <Tree
-          ref={treeApiRef}
-          data={displayData}
-          width={treeDims.width}
-          height={treeDims.height}
-          rowHeight={28}
-          openByDefault={false}
-          onMove={onMove}
-          disableDrag={readOnly}
-          disableDrop={readOnly}
-        >
-          {Node}
-        </Tree>
-      </div>
-      
-      <div className="p-3 border-t mt-auto">
-        {session ? (
-            <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <User size={16} className="mr-2 text-gray-600"/>
-                    <span className="text-sm font-medium text-gray-700">{session.user.name}</span>
-                    {session.user.role === 'admin' && (
-                        <span className={cn("ml-2 px-2 py-0.5 text-xs font-semibold rounded-full", currentTheme.headerBadge, "text-white")}>Admin</span>
-                    )}
-                </div>
-                <button onClick={() => signOut({ callbackUrl: '/' })} className="text-gray-500 hover:text-gray-800">
-                    <LogOut size={16} />
-                </button>
-            </div>
-        ) : (
-            <Button onClick={() => signIn()} className="w-full">Sign In</Button>
-        )}
-      </div>
-
-      {/* Create Dialog */}
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create New</DialogTitle>
-            <DialogDescription>
-              Enter a name for your new file or folder. Use .md for files.
-            </DialogDescription>
-          </DialogHeader>
-          <Input value={createInput} onChange={(e) => setCreateInput(e.target.value)} placeholder="e.g., new-feature.md or components/" />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-            <Button onClick={submitCreate}>Create</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Rename Dialog */}
-      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Rename</DialogTitle>
-          </DialogHeader>
-          <Input value={renameInput} onChange={(e) => setRenameInput(e.target.value)} />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
-            <Button onClick={submitRename}>Rename</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delete Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Are you sure?</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. This will delete the item.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex items-center space-x-2 mt-4">
-            <Input type="checkbox" id="physical-delete" checked={isPhysicalDelete} onChange={(e) => setIsPhysicalDelete(e.target.checked)} />
-            <Label htmlFor="physical-delete" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Permanently delete</Label>
+    <TooltipProvider>
+      <aside className="w-64 flex-shrink-0 border-r bg-gray-50 flex flex-col h-full">
+        <div className="p-3 flex items-center justify-between border-b h-[53px]">
+          <div className="flex items-center">
+              <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mr-2", currentTheme.avatarBg)}>
+                  <span className={cn("font-bold text-lg", currentTheme.avatarText)}>{projectId.charAt(0).toUpperCase()}</span>
+              </div>
+              <h2 className="font-bold text-lg text-gray-800 truncate">{projectId}</h2>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={submitDelete}>Delete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <Link href={backHref} className="text-gray-500 hover:text-gray-800">
+              <ArrowLeft size={20} />
+          </Link>
+        </div>
 
-    </aside>
+        <nav className="p-2">
+          <NavItem icon={Home} label="Home" isActive={activeNav === 'home'} onClick={() => handleNavClick('home')} theme={currentTheme} />
+          <NavItem icon={Search} label="Search" isActive={activeNav === 'search'} onClick={() => handleNavClick('search')} theme={currentTheme} />
+          {session && <NavItem icon={Star} label="Starred" isActive={activeNav === 'starred'} onClick={() => handleNavClick('starred')} theme={currentTheme} />}
+          {theme !== 'emerald' && session && (session.user.role === 'admin' || !readOnly) && <NavItem icon={Settings} label="Settings" isActive={activeNav === 'settings'} onClick={() => handleNavClick('settings')} theme={currentTheme} />}
+        </nav>
+
+        <div className="px-3 mb-2 mt-2 flex justify-between items-center">
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Files</h3>
+          {!readOnly && (
+              <div className="flex items-center space-x-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={() => handleCreate('file')} className="text-gray-400 hover:text-gray-700">
+                          <FilePlus size={16} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>New File</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button onClick={() => handleCreate('folder')} className="text-gray-400 hover:text-gray-700">
+                          <FolderPlus size={16} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>New Folder</p>
+                    </TooltipContent>
+                  </Tooltip>
+              </div>
+          )}
+        </div>
+
+        <div ref={treeContainerRef} className="flex-grow px-2 pb-4 overflow-y-auto overflow-x-hidden">
+          <Tree
+            ref={treeApiRef}
+            data={displayData}
+            width={treeDims.width}
+            height={treeDims.height}
+            rowHeight={28}
+            openByDefault={false}
+            onMove={onMove}
+            disableDrag={readOnly}
+            disableDrop={readOnly}
+          >
+            {Node}
+          </Tree>
+        </div>
+        
+        <div className="p-3 border-t mt-auto">
+          {session ? (
+              <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                      <User size={16} className="mr-2 text-gray-600"/>
+                      <span className="text-sm font-medium text-gray-700">{session.user.name}</span>
+                      {session.user.role === 'admin' && (
+                          <span className={cn("ml-2 px-2 py-0.5 text-xs font-semibold rounded-full", currentTheme.headerBadge, "text-white")}>Admin</span>
+                      )}
+                  </div>
+                  <button onClick={() => signOut({ callbackUrl: '/' })} className="text-gray-500 hover:text-gray-800">
+                      <LogOut size={16} />
+                  </button>
+              </div>
+          ) : (
+              <Button onClick={() => signIn()} className="w-full">Sign In</Button>
+          )}
+        </div>
+
+        {/* Create Dialog */}
+        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{createType === 'file' ? 'Create New File' : 'Create New Folder'}</DialogTitle>
+              <DialogDescription>
+                {createType === 'file' 
+                  ? 'Enter a name for your new file. (e.g. "new-feature")' 
+                  : 'Enter a name for your new folder. (e.g. "components")'}
+              </DialogDescription>
+            </DialogHeader>
+            <Input 
+              value={createInput} 
+              onChange={(e) => setCreateInput(e.target.value)} 
+              placeholder={createType === 'file' ? 'e.g., new-feature.md' : 'e.g., components'} 
+              onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                      e.preventDefault();
+                      submitCreate();
+                  }
+              }}
+            />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
+              <Button onClick={submitCreate}>Create</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Rename Dialog */}
+        <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Rename</DialogTitle>
+            </DialogHeader>
+            <Input value={renameInput} onChange={(e) => setRenameInput(e.target.value)} />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
+              <Button onClick={submitRename}>Rename</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Are you sure?</DialogTitle>
+              <DialogDescription>
+                This action cannot be undone. This will delete the item.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center space-x-2 mt-4">
+              <Input type="checkbox" id="physical-delete" checked={isPhysicalDelete} onChange={(e) => setIsPhysicalDelete(e.target.checked)} />
+              <Label htmlFor="physical-delete" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Permanently delete</Label>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+              <Button variant="destructive" onClick={submitDelete}>Delete</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+      </aside>
+    </TooltipProvider>
   );
 }
 

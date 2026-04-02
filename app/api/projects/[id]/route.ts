@@ -8,7 +8,7 @@ import { authOptions } from '../../auth/[...nextauth]/route';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
     const projectId = decodeURIComponent(resolvedParams.id);
@@ -32,7 +32,7 @@ export async function DELETE(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const resolvedParams = await params;
     const projectId = decodeURIComponent(resolvedParams.id);
@@ -87,9 +87,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const projectId = decodeURIComponent(params.id);
+  const resolvedParams = await params;
+  const projectId = decodeURIComponent(resolvedParams.id);
   
   if (!projectId) {
       return NextResponse.json({ error: 'Project ID is required' }, { status: 400 });

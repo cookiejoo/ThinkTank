@@ -1,22 +1,6 @@
-import { NodeViewContent, NodeViewWrapper } from '@tiptap/react';
+import { NodeViewContent, NodeViewWrapper, NodeViewProps } from '@tiptap/react';
 import React from 'react';
 import { cn } from '@/lib/utils';
-
-interface CodeBlockComponentProps {
-  node: {
-    attrs: {
-      language: string;
-    };
-  };
-  updateAttributes: (attrs: { language: string }) => void;
-  extension: {
-    options: {
-      lowlight: {
-        listLanguages: () => string[];
-      };
-    };
-  };
-}
 
 export default function CodeBlockComponent({
   node: {
@@ -24,8 +8,8 @@ export default function CodeBlockComponent({
   },
   updateAttributes,
   extension,
-}: CodeBlockComponentProps) {
-  const languages = extension.options.lowlight.listLanguages();
+}: NodeViewProps) {
+  const languages: string[] = extension.options.lowlight.listLanguages();
 
   return (
     <NodeViewWrapper className="code-block-wrapper relative group my-4 rounded-lg border bg-slate-950 text-slate-50">
@@ -45,7 +29,7 @@ export default function CodeBlockComponent({
             >
                 <option value="null">auto</option>
                 <option disabled>---</option>
-                {languages.map((lang, index) => (
+                {languages.map((lang: string, index: number) => (
                     <option key={index} value={lang}>
                         {lang}
                     </option>
