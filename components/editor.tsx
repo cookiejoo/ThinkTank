@@ -62,6 +62,75 @@ export function Editor({
     onNavigateRef.current = onNavigate;
   }, [onNavigate]);
 
+  const uploadImage = async (file: File, view: any, clientX?: number, clientY?: number) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    let targetDir = 'images';
+    if (currentFilePath) {
+      const parts = currentFilePath.split('/');
+      parts.pop(); // remove filename
+      if (parts.length > 0) {
+        targetDir = `${parts.join('/')}/images`;
+      }
+    }
+    formData.append('targetDir', targetDir);
+
+    try {
+      const res = await fetch(`/api/projects/${projectId}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!res.ok) throw new Error('Upload failed');
+      
+      const data = await res.json();
+      
+      // Determine relative path for markdown
+      let relPath = data.filePath;
+      if (currentFilePath) {
+        const currentDir = currentFilePath.substring(0, currentFilePath.lastIndexOf('/'));
+        // If the image is in the same directory or a subdirectoy, make it relative
+        if (relPath.startsWith(currentDir + '/')) {
+          relPath = relPath.substring(currentDir.length + 1);
+        } else {
+          // Construct full relative path
+          const currentParts = currentDir.split('/').filter(Boolean);
+          const targetParts = relPath.split('/').filter(Boolean);
+          
+          let i = 0;
+          while (i < currentParts.length && i < targetParts.length && currentParts[i] === targetParts[i]) {
+            i++;
+          }
+          
+          const upCount = currentParts.length - i;
+          const upString = Array(upCount).fill('..').join('/');
+          const downString = targetParts.slice(i).join('/');
+          
+          relPath = upString ? `${upString}/${downString}` : downString;
+        }
+      }
+
+      const { schema } = view.state;
+      const node = schema.nodes.image.create({ src: relPath });
+      
+      if (clientX !== undefined && clientY !== undefined) {
+        const pos = view.posAtCoords({ left: clientX, top: clientY });
+        if (pos) {
+          const transaction = view.state.tr.insert(pos.pos, node);
+          view.dispatch(transaction);
+        }
+      } else {
+        const transaction = view.state.tr.replaceSelectionWith(node);
+        view.dispatch(transaction);
+      }
+      
+    } catch (error) {
+      console.error('Image upload failed:', error);
+      alert('Failed to upload image');
+    }
+  };
+
   // Global click handler to prevent new tab opening for md-links
   useEffect(() => {
     const handleGlobalClick = (event: MouseEvent) => {
@@ -205,7 +274,42 @@ export function Editor({
     content: initialBodyContent, // Initialize with ONLY body
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[500px] p-4',
+        class: cn(
+          'prose prose-slate max-w-none focus:outline-none min-h-[500px] p-8',
+          'prose-h1:text-3xl prose-h1:font-bold prose-h1:mt-8 prose-h1:mb-4',
+          'prose-h2:text-2xl prose-h2:font-semibold prose-h2:mt-6 prose-h2:mb-4 prose-h2:border-b prose-h2:pb-2',
+          'prose-h3:text-xl prose-h3:font-semibold prose-h3:mt-5 prose-h3:mb-3',
+          'prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-a:no-underline hover:prose-a:underline',
+          'prose-code:text-pink-600 prose-code:bg-pink-50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none',
+          'prose-pre:bg-slate-950 prose-pre:text-slate-50',
+          'prose-img:rounded-lg prose-img:shadow-md prose-img:border',
+          'prose-blockquote:border-l-4 prose-blockquote:border-slate-300 prose-blockquote:text-slate-600 prose-blockquote:bg-slate-50 prose-blockquote:py-1 prose-blockquote:pr-4',
+          'prose-ul:list-disc prose-ul:pl-6',
+          'prose-ol:list-decimal prose-ol:pl-6',
+          'prose-li:marker:text-slate-400'
+        ),
+      },
+      handleDrop: (view, event, slice, moved) => {
+        if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
+          const file = event.dataTransfer.files[0];
+          if (file.type.startsWith('image/')) {
+            event.preventDefault();
+            uploadImage(file, view, event.clientX, event.clientY);
+            return true;
+          }
+        }
+        return false;
+      },
+      handlePaste: (view, event, slice) => {
+        if (event.clipboardData && event.clipboardData.files && event.clipboardData.files[0]) {
+          const file = event.clipboardData.files[0];
+          if (file.type.startsWith('image/')) {
+            event.preventDefault();
+            uploadImage(file, view);
+            return true;
+          }
+        }
+        return false;
       },
       handleDOMEvents: {
         click: (view, event) => {
@@ -638,7 +742,54 @@ useState(() => {
             <>
                 <div className="flex-1 overflow-y-auto bg-white">
                     {/* Hide toolbar in preview AND split mode (since split is read-only preview) */}
-                    {mode === 'edit' && <Toolbar editor={editor} />}
+                    {mode === 'edit' && <Toolbar editor={editor} onUploadImage={async (file) => {
+                      // Call the uploadImage method we defined earlier, but just return the URL
+                      // We pass a dummy view because the Toolbar uses editor.chain().setImage()
+                      const formData = new FormData();
+                      formData.append('file', file);
+                      
+                      let targetDir = 'images';
+                      if (currentFilePath) {
+                        const parts = currentFilePath.split('/');
+                        parts.pop(); // remove filename
+                        if (parts.length > 0) {
+                          targetDir = `${parts.join('/')}/images`;
+                        }
+                      }
+                      formData.append('targetDir', targetDir);
+                  
+                      try {
+                        const res = await fetch(`/api/projects/${projectId}/upload`, {
+                          method: 'POST',
+                          body: formData,
+                        });
+                        
+                        if (!res.ok) throw new Error('Upload failed');
+                        
+                        const data = await res.json();
+                        let relPath = data.filePath;
+                        if (currentFilePath) {
+                          const currentDir = currentFilePath.substring(0, currentFilePath.lastIndexOf('/'));
+                          if (relPath.startsWith(currentDir + '/')) {
+                            relPath = relPath.substring(currentDir.length + 1);
+                          } else {
+                            const currentParts = currentDir.split('/').filter(Boolean);
+                            const targetParts = relPath.split('/').filter(Boolean);
+                            let i = 0;
+                            while (i < currentParts.length && i < targetParts.length && currentParts[i] === targetParts[i]) i++;
+                            const upCount = currentParts.length - i;
+                            const upString = Array(upCount).fill('..').join('/');
+                            const downString = targetParts.slice(i).join('/');
+                            relPath = upString ? `${upString}/${downString}` : downString;
+                          }
+                        }
+                        return relPath;
+                      } catch (error) {
+                        console.error('Image upload failed:', error);
+                        alert('Failed to upload image');
+                        return null;
+                      }
+                    }} />}
                     <EditorContent editor={editor} />
                 </div>
                 

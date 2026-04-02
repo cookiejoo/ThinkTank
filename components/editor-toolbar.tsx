@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -40,13 +40,15 @@ import { Label } from '@/components/ui/label';
 
 interface ToolbarProps {
   editor: Editor | null;
+  onUploadImage?: (file: File) => Promise<string | null>;
 }
 
-export function Toolbar({ editor }: ToolbarProps) {
+export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!editor) {
     return null;
@@ -70,6 +72,21 @@ export function Toolbar({ editor }: ToolbarProps) {
   const openImageDialog = () => {
     setImageUrl('');
     setImageDialogOpen(true);
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadImage) return;
+
+    try {
+      const url = await onUploadImage(file);
+      if (url) {
+        editor.chain().focus().setImage({ src: url }).run();
+        setImageDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Failed to upload image:', error);
+    }
   };
 
   const submitImage = () => {
@@ -308,19 +325,43 @@ export function Toolbar({ editor }: ToolbarProps) {
           <DialogHeader>
             <DialogTitle>Insert Image</DialogTitle>
           </DialogHeader>
-          <div className="py-2">
-            <Label htmlFor="image-url">Image URL</Label>
-            <Input 
-                id="image-url" 
-                value={imageUrl} 
-                onChange={(e) => setImageUrl(e.target.value)} 
-                placeholder="https://example.com/image.png"
-                onKeyDown={(e) => e.key === 'Enter' && submitImage()}
-            />
+          <div className="py-2 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="image-url">Image URL</Label>
+              <Input 
+                  id="image-url" 
+                  value={imageUrl} 
+                  onChange={(e) => setImageUrl(e.target.value)} 
+                  placeholder="https://example.com/image.png"
+                  onKeyDown={(e) => e.key === 'Enter' && submitImage()}
+              />
+            </div>
+            {onUploadImage && (
+              <div className="space-y-2">
+                <Label>Or Upload Image</Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="secondary" 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full"
+                  >
+                    Select File
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setImageDialogOpen(false)}>Cancel</Button>
-            <Button onClick={submitImage}>Insert</Button>
+            <Button onClick={submitImage}>Insert URL</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
