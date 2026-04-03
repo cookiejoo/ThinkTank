@@ -58,9 +58,45 @@ export async function getProjectConfig(projectId: string): Promise<ProjectConfig
     }
 }
 
+function normalizeFsPath(p: string): string {
+    return p.startsWith('/') ? p.slice(1) : p;
+}
+
+function normalizeConfigPath(p: string): string {
+    return p.startsWith('/') ? p : `/${p}`;
+}
+
+function normalizeFilesConfig(files?: Record<string, FileMetadata>): Record<string, FileMetadata> {
+    const out: Record<string, FileMetadata> = {};
+    for (const [rawPath, rawMeta] of Object.entries(files || {})) {
+        if (!rawMeta) continue;
+        const key = normalizeConfigPath(rawPath);
+        const meta: FileMetadata = { ...rawMeta };
+
+        if (meta.isDeleted !== true) {
+            delete meta.isDeleted;
+            delete meta.deletedAt;
+        }
+
+        if (meta.isHidden !== true) {
+            delete meta.isHidden;
+        }
+
+        if (typeof meta.sortOrder !== 'number') {
+            delete meta.sortOrder;
+        }
+
+        if (Object.keys(meta).length > 0) {
+            out[key] = meta;
+        }
+    }
+    return out;
+}
+
 export async function updateProjectConfig(projectId: string, config: ProjectConfig): Promise<void> {
     const configDir = path.join(ROOT_DIR, projectId, '.thinktank');
     await fs.mkdir(configDir, { recursive: true });
+    config.files = normalizeFilesConfig(config.files);
     await fs.writeFile(path.join(configDir, 'config.json'), JSON.stringify(config, null, 2));
 }
 
@@ -342,7 +378,7 @@ export async function getFileTree(projectId: string): Promise<TreeNode[]> {
 
 export async function getFileContent(projectId: string, filePath: string): Promise<string> {
   const projectDir = path.join(ROOT_DIR, projectId);
-  const fullPath = path.join(projectDir, filePath);
+  const fullPath = path.join(projectDir, normalizeFsPath(filePath));
   
   if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
     throw new Error('Access denied');
@@ -352,7 +388,7 @@ export async function getFileContent(projectId: string, filePath: string): Promi
 
 export async function saveFileContent(projectId: string, filePath: string, content: string): Promise<void> {
     const projectDir = path.join(ROOT_DIR, projectId);
-    const fullPath = path.join(projectDir, filePath);
+    const fullPath = path.join(projectDir, normalizeFsPath(filePath));
     
     if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
         throw new Error('Access denied');
@@ -364,9 +400,17 @@ export async function toggleFileVisibility(projectId: string, filePath: string, 
     const config = await getProjectConfig(projectId);
     
     if (!config.files) config.files = {};
-    if (!config.files[filePath]) config.files[filePath] = {};
+    const key = normalizeConfigPath(filePath);
+    if (!config.files[key]) config.files[key] = {};
     
-    config.files[filePath].isHidden = !isVisible;
+    if (isVisible) {
+        delete config.files[key].isHidden;
+    } else {
+        config.files[key].isHidden = true;
+    }
+    if (Object.keys(config.files[key]).length === 0) {
+        delete config.files[key];
+    }
     
     await updateProjectConfig(projectId, config);
 }
@@ -375,9 +419,10 @@ export async function updateFileSorting(projectId: string, filePath: string, sor
     const config = await getProjectConfig(projectId);
     
     if (!config.files) config.files = {};
-    if (!config.files[filePath]) config.files[filePath] = {};
+    const key = normalizeConfigPath(filePath);
+    if (!config.files[key]) config.files[key] = {};
     
-    config.files[filePath].sortOrder = sortOrder;
+    config.files[key].sortOrder = sortOrder;
     
     await updateProjectConfig(projectId, config);
 }
@@ -388,8 +433,9 @@ export async function updateBatchSorting(projectId: string, updates: { path: str
     if (!config.files) config.files = {};
     
     updates.forEach(update => {
-        if (!config.files![update.path]) config.files![update.path] = {};
-        config.files![update.path].sortOrder = update.sortOrder;
+        const key = normalizeConfigPath(update.path);
+        if (!config.files![key]) config.files![key] = {};
+        config.files![key].sortOrder = update.sortOrder;
     });
     
     await updateProjectConfig(projectId, config);
@@ -409,7 +455,7 @@ export async function updateProjectGitConfig(projectId: string, gitConfig?: Proj
 
 export async function createFile(projectId: string, filePath: string, isDir: boolean): Promise<void> {
     const projectDir = path.join(ROOT_DIR, projectId);
-    const fullPath = path.join(projectDir, filePath);
+    const fullPath = path.join(projectDir, normalizeFsPath(filePath));
     
     if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
         throw new Error('Access denied');
@@ -423,17 +469,20 @@ export async function createFile(projectId: string, filePath: string, isDir: boo
     }
 
     const config = await getProjectConfig(projectId);
-    const relativePath = filePath.startsWith('/') ? filePath : '/' + filePath;
-    if (config.files && config.files[relativePath] && config.files[relativePath].isDeleted) {
-        config.files[relativePath].isDeleted = false;
-        delete config.files[relativePath].deletedAt;
+    const key = normalizeConfigPath(filePath);
+    if (config.files && config.files[key] && config.files[key].isDeleted) {
+        delete config.files[key].isDeleted;
+        delete config.files[key].deletedAt;
+        if (Object.keys(config.files[key]).length === 0) {
+            delete config.files[key];
+        }
         await updateProjectConfig(projectId, config);
     }
 }
 
 export async function deleteFile(projectId: string, filePath: string, physical = false): Promise<void> {
     const projectDir = path.join(ROOT_DIR, projectId);
-    const fullPath = path.join(projectDir, filePath);
+    const fullPath = path.join(projectDir, normalizeFsPath(filePath));
     
     if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
         throw new Error('Access denied');
@@ -441,11 +490,21 @@ export async function deleteFile(projectId: string, filePath: string, physical =
 
     if (physical) {
         await fs.rm(fullPath, { recursive: true, force: true });
+        const config = await getProjectConfig(projectId);
+        if (!config.files) config.files = {};
+        const key = normalizeConfigPath(filePath);
+        const prefix = key.endsWith('/') ? key : `${key}/`;
+        for (const p of Object.keys(config.files)) {
+            if (p === key || p.startsWith(prefix)) {
+                delete config.files[p];
+            }
+        }
+        await updateProjectConfig(projectId, config);
     } else {
         const config = await getProjectConfig(projectId);
         if (!config.files) config.files = {};
         
-        const relativePath = filePath.startsWith('/') ? filePath : '/' + filePath;
+        const relativePath = normalizeConfigPath(filePath);
         
         if (!config.files[relativePath]) config.files[relativePath] = {};
         config.files[relativePath].isDeleted = true;
@@ -475,7 +534,7 @@ export async function listTrashedItems(projectId: string): Promise<TrashedItem[]
 
   for (const trashedPath of trashedPaths) {
     const normalized = trashedPath.startsWith('/') ? trashedPath : `/${trashedPath}`;
-    const fullPath = path.join(projectDir, normalized);
+    const fullPath = path.join(projectDir, normalizeFsPath(normalized));
 
     if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
       continue;
@@ -508,10 +567,10 @@ export async function restoreTrashedItem(projectId: string, itemPath: string): P
   const config = await getProjectConfig(projectId);
   if (!config.files) config.files = {};
 
-  const normalized = itemPath.startsWith('/') ? itemPath : `/${itemPath}`;
+  const normalized = normalizeConfigPath(itemPath);
   const meta = config.files[normalized];
   if (meta) {
-    meta.isDeleted = false;
+    delete meta.isDeleted;
     delete meta.deletedAt;
     if (Object.keys(meta).length === 0) {
       delete config.files[normalized];
@@ -519,7 +578,7 @@ export async function restoreTrashedItem(projectId: string, itemPath: string): P
   }
 
   const projectDir = path.join(ROOT_DIR, projectId);
-  const fullPath = path.join(projectDir, normalized);
+  const fullPath = path.join(projectDir, normalizeFsPath(normalized));
   let isDir = false;
   try {
     const stat = await fs.stat(fullPath);
@@ -534,7 +593,7 @@ export async function restoreTrashedItem(projectId: string, itemPath: string): P
       if (!p.startsWith(prefix)) continue;
       if (!m) continue;
       if (!m.isDeleted) continue;
-      m.isDeleted = false;
+      delete m.isDeleted;
       delete m.deletedAt;
       if (Object.keys(m).length === 0) {
         delete config.files[p];
@@ -547,8 +606,8 @@ export async function restoreTrashedItem(projectId: string, itemPath: string): P
 
 export async function purgeTrashedItem(projectId: string, itemPath: string): Promise<void> {
   const projectDir = path.join(ROOT_DIR, projectId);
-  const normalized = itemPath.startsWith('/') ? itemPath : `/${itemPath}`;
-  const fullPath = path.join(projectDir, normalized);
+  const normalized = normalizeConfigPath(itemPath);
+  const fullPath = path.join(projectDir, normalizeFsPath(normalized));
 
   if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
     throw new Error('Access denied');
@@ -579,7 +638,7 @@ export async function emptyTrash(projectId: string): Promise<void> {
 
 export async function getAbsoluteFilePath(projectId: string, filePath: string): Promise<string> {
     const projectDir = path.join(ROOT_DIR, projectId);
-    const fullPath = path.join(projectDir, filePath);
+    const fullPath = path.join(projectDir, normalizeFsPath(filePath));
     
     if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
         throw new Error('Access denied');
@@ -590,8 +649,8 @@ export async function getAbsoluteFilePath(projectId: string, filePath: string): 
 
 export async function renameFile(projectId: string, oldPath: string, newPath: string): Promise<void> {
     const projectDir = path.join(ROOT_DIR, projectId);
-    const fullOldPath = path.join(projectDir, oldPath);
-    const fullNewPath = path.join(projectDir, newPath);
+    const fullOldPath = path.join(projectDir, normalizeFsPath(oldPath));
+    const fullNewPath = path.join(projectDir, normalizeFsPath(newPath));
     
     if (!path.resolve(fullOldPath).startsWith(path.resolve(projectDir)) || 
         !path.resolve(fullNewPath).startsWith(path.resolve(projectDir))) {

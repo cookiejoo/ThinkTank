@@ -39,6 +39,7 @@ const zh: Dict = {
   'action.delete': '删除',
   'action.signIn': '登录',
   'action.edit': '编辑',
+  'action.close': '关闭',
 
   'error.prefix': '错误',
   'error.unknown': '发生未知错误',
@@ -156,6 +157,9 @@ const zh: Dict = {
   'preview.mode.git': 'Git',
   'preview.mode.online': '在线',
   'preview.noDesc': '暂无简介',
+  'imagePreview.title': '图片预览',
+  'imagePreview.openNewTab': '新标签打开',
+  'imagePreview.alt': '图片预览',
 
   'login.title': 'ThinkTank 登录',
   'login.desc': '输入账号密码以继续',
@@ -301,6 +305,7 @@ const en: Dict = {
   'action.delete': 'Delete',
   'action.signIn': 'Sign In',
   'action.edit': 'Edit',
+  'action.close': 'Close',
 
   'error.prefix': 'Error',
   'error.unknown': 'An unknown error occurred.',
@@ -418,6 +423,9 @@ const en: Dict = {
   'preview.mode.git': 'Git',
   'preview.mode.online': 'Online',
   'preview.noDesc': 'No description',
+  'imagePreview.title': 'Image Preview',
+  'imagePreview.openNewTab': 'Open in new tab',
+  'imagePreview.alt': 'Image preview',
 
   'login.title': 'ThinkTank Login',
   'login.desc': 'Enter your credentials to access',

@@ -32,6 +32,7 @@ interface EditorProps {
   selectedVersion?: string;
   onVersionChange?: (version: string) => void;
   onNavigate?: (path: string) => void;
+  onFileSystemChange?: () => void;
   basePath?: string;
   theme?: 'indigo' | 'emerald';
 }
@@ -46,6 +47,7 @@ export function Editor({
     selectedVersion = 'latest',
     onVersionChange = () => {},
     onNavigate,
+    onFileSystemChange,
     basePath = '/preview',
     theme = 'indigo'
 }: EditorProps) {
@@ -87,6 +89,7 @@ export function Editor({
       if (!res.ok) throw new Error('Upload failed');
       
       const data = await res.json();
+      onFileSystemChange?.();
       
       // Determine relative path for markdown
       let relPath = data.filePath;
@@ -772,6 +775,7 @@ useState(() => {
                         if (!res.ok) throw new Error('Upload failed');
                         
                         const data = await res.json();
+                        onFileSystemChange?.();
                         let relPath = data.filePath;
                         if (currentFilePath) {
                           const currentDir = currentFilePath.substring(0, currentFilePath.lastIndexOf('/'));

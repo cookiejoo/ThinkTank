@@ -68,6 +68,7 @@
 负责用户界面展示和用户交互。
 
 **主要技术**：
+
 - **Next.js App Router**: 现代化的路由系统，支持服务端组件
 - **React Hooks**: 状态管理和副作用处理
 - **Tiptap**: Markdown 编辑器
@@ -75,6 +76,7 @@
 - **Tailwind CSS**: 实用优先的样式框架
 
 **关键组件**：
+
 - `Sidebar`: 文件树导航
 - `Editor`: Markdown 编辑器
 - `HomePage`: 项目仪表盘
@@ -85,6 +87,7 @@
 处理认证和权限验证。
 
 **NextAuth Middleware**：
+
 - 路由保护：`/admin/*` 和 `/project/*` 需要登录
 - 会话管理：维护用户登录状态
 - 重定向逻辑：未登录用户重定向到 `/login`
@@ -106,6 +109,7 @@ export const config = {
 处理 HTTP 请求，执行业务逻辑。
 
 **API 路由结构**：
+
 ```
 app/api/
 ├── auth/[...nextauth]/      # NextAuth 配置
@@ -141,19 +145,12 @@ app/api/
 
 **核心服务**：
 
-| 服务 | 文件 | 职责 |
-|-----|------|------|
-| `fs-service.ts` | 文件系统操作、项目/文件 CRUD、配置管理 |
-| `git-sync-service.ts` | Git 同步、定时任务调度 |
-| `user-service.ts` | 用户管理、密码哈希 |
-| `crypto.ts` | AES 加密/解密 |
-| `config-service.ts` | 配置读取和写入 |
-
 ### 5. 数据层 (Data Layer)
 
 唯一的数据源是文件系统。
 
 **存储结构**：
+
 ```
 docs/
 ├── .thinktank/                    # 系统级配置
@@ -264,3 +261,5 @@ sequenceDiagram
 
 - [数据模型](./data-model.md) - 了解数据结构详情
 - [权限体系](./auth-rbac.md) - 了解认证和授权机制
+
+&nbsp;

@@ -446,6 +446,12 @@ export function Sidebar({
       }
       
       try {
+          if (targetNode?.isInternal && treeApiRef.current) {
+              try {
+                  treeApiRef.current.open(targetNode.id);
+              } catch {
+              }
+          }
           await fetch('/api/files/create', {
               method: 'POST',
               body: JSON.stringify({
@@ -454,7 +460,20 @@ export function Sidebar({
                   isDir
               })
           });
-          reloadTree();
+          await reloadTree();
+          if (targetNode?.isInternal && treeApiRef.current) {
+              try {
+                  treeApiRef.current.open(targetNode.id);
+              } catch {
+              }
+          }
+          if (isDir && treeApiRef.current) {
+              const createdId = `/${finalPath}`;
+              try {
+                  treeApiRef.current.open(createdId);
+              } catch {
+              }
+          }
           setCreateDialogOpen(false);
           setTargetNode(null);
       } catch (e) {

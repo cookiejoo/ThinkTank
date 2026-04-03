@@ -41,24 +41,7 @@ ThinkTank 采用**文件原生**的数据存储方式：
 
 **字段说明**：
 
-| 字段 | 类型 | 必填 | 说明 |
-|-----|------|------|------|
-| `description` | string | 否 | 项目描述，显示在首页 |
-| `mode` | enum | 否 | `edit` 或 `git`，项目模式 |
-| `gitConfig` | object | 否 | Git 模式配置（仅 mode 为 git 时） |
-| `createdAt` | string | 是 | 项目创建时间（ISO 8601 格式） |
-| `files` | object | 否 | 文件元数据映射（路径 → 元数据） |
-| `isDeleted` | boolean | 否 | 项目是否被逻辑删除 |
-
 **GitConfig 子结构**：
-
-| 字段 | 类型 | 必填 | 说明 |
-|-----|------|------|------|
-| `repoUrl` | string | 是 | Git 仓库地址 |
-| `branch` | string | 是 | 要同步的分支 |
-| `rootPath` | string | 否 | 仓库中的子目录路径 |
-| `token` | string | 否 | 加密后的 Personal Access Token |
-| `syncInterval` | number | 是 | 同步间隔（分钟） |
 
 ### 2. 分组配置 (Groups Config)
 
@@ -81,12 +64,6 @@ ThinkTank 采用**文件原生**的数据存储方式：
 
 **字段说明**：
 
-| 字段 | 类型 | 必填 | 说明 |
-|-----|------|------|------|
-| `name` | string | 是 | 分组名称，唯一 |
-| `projects` | string[] | 是 | 项目 ID 列表 |
-| `isDeleted` | boolean | 否 | 分组是否被逻辑删除 |
-
 ### 3. 用户配置 (User Config)
 
 **位置**：`docs/.thinktank/users/[userId].json`
@@ -106,11 +83,6 @@ ThinkTank 采用**文件原生**的数据存储方式：
 ```
 
 **字段说明**：
-
-| 字段 | 类型 | 必填 | 说明 |
-|-----|------|------|------|
-| `starred` | string[] | 是 | 收藏的文件路径列表 |
-| `recent` | string[] | 是 | 最近访问的文件路径列表（最多 20 条） |
 
 ### 4. 用户账户 (User Account)
 
@@ -137,14 +109,6 @@ ThinkTank 采用**文件原生**的数据存储方式：
 
 **字段说明**：
 
-| 字段 | 类型 | 必填 | 说明 |
-|-----|------|------|------|
-| `id` | string | 是 | 用户唯一标识 |
-| `username` | string | 是 | 登录用户名 |
-| `passwordHash` | string | 是 | bcrypt 哈希后的密码 |
-| `role` | enum | 是 | `admin` 或 `user` |
-| `accessibleProjects` | string[] | 否 | 用户可访问的项目 ID 列表 |
-
 ## 文件元数据 (File Metadata)
 
 存储在项目配置的 `files` 对象中，以文件路径为键：
@@ -158,12 +122,6 @@ ThinkTank 采用**文件原生**的数据存储方式：
   }
 }
 ```
-
-| 字段 | 类型 | 说明 |
-|-----|------|------|
-| `isDeleted` | boolean | 文件是否被逻辑删除（默认不在显示） |
-| `isHidden` | boolean | 文件是否隐藏（在树中显示为斜体/灰色） |
-| `sortOrder` | number | 文件排序优先级（越小越靠前） |
 
 ## 前端类型定义
 
@@ -285,3 +243,5 @@ Git Token 使用 AES-256-CBC 加密存储：
 
 - [权限体系](./auth-rbac.md) - 了解认证和授权机制
 - [开发环境配置](../development/environment-setup.md) - 开始本地开发
+
+&nbsp;

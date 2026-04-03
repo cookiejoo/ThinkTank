@@ -6,6 +6,7 @@ import { HomePage } from '@/components/home-page';
 import { StarredPage } from '@/components/starred-page';
 import { SearchPalette } from '@/components/search-palette';
 import { TrashPage } from '@/components/trash-page';
+import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 import { useUserConfig } from '@/hooks/use-user-config';
 import { useI18n } from '@/components/i18n-provider';
 
@@ -50,6 +51,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<{ src: string; title?: string } | null>(null);
 
   const handleSelect = async (path: string) => {
     if (!path) {
@@ -67,7 +69,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         if (selectedVersion !== 'latest') {
             imageUrl += `?version=${selectedVersion}`;
         }
-        window.open(imageUrl, '_blank');
+        setImagePreview({ src: imageUrl, title: path.split('/').pop() });
         return;
     }
 
@@ -166,6 +168,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     readOnly={readOnly}
                     projectId={projectId}
                     currentFilePath={currentFile || undefined}
+                    onFileSystemChange={handleProjectUpdate}
                     versions={versions}
                     selectedVersion={selectedVersion}
                     onVersionChange={handleVersionChange}
@@ -201,6 +204,14 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         onClose={() => setIsSearchOpen(false)} 
         onSelect={handleSelect} 
       />
+      {imagePreview && (
+        <ImagePreviewDialog
+          open={Boolean(imagePreview)}
+          onOpenChange={(open) => !open && setImagePreview(null)}
+          src={imagePreview.src}
+          title={imagePreview.title}
+        />
+      )}
     </div>
   );
 }

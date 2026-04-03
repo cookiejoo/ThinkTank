@@ -6,6 +6,7 @@ import { Editor } from '@/components/editor';
 import { HomePage } from '@/components/home-page';
 import { StarredPage } from '@/components/starred-page';
 import { SearchPalette } from '@/components/search-palette';
+import { ImagePreviewDialog } from '@/components/image-preview-dialog';
 import { useI18n } from '@/components/i18n-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Info } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<{ src: string; title?: string } | null>(null);
 
   useEffect(() => {
     fetch(`/api/projects/${projectId}/versions`)
@@ -51,7 +53,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
         if (selectedVersion !== 'latest') {
             imageUrl += `?version=${selectedVersion}`;
         }
-        window.open(imageUrl, '_blank');
+        setImagePreview({ src: imageUrl, title: path.split('/').pop() });
         return;
     }
 
@@ -160,6 +162,14 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
         onClose={() => setIsSearchOpen(false)} 
         onSelect={handleSelect} 
       />
+      {imagePreview && (
+        <ImagePreviewDialog
+          open={Boolean(imagePreview)}
+          onOpenChange={(open) => !open && setImagePreview(null)}
+          src={imagePreview.src}
+          title={imagePreview.title}
+        />
+      )}
     </div>
   );
 }
