@@ -111,8 +111,11 @@ export function Editor({
         }
       }
 
+      // Encode URI to safely handle spaces in Markdown syntax
+      const encodedPath = encodeURI(relPath);
+
       const { schema } = view.state;
-      const node = schema.nodes.image.create({ src: relPath });
+      const node = schema.nodes.image.create({ src: encodedPath });
       
       if (clientX !== undefined && clientY !== undefined) {
         const pos = view.posAtCoords({ left: clientX, top: clientY });
@@ -783,7 +786,8 @@ useState(() => {
                             relPath = upString ? `${upString}/${downString}` : downString;
                           }
                         }
-                        return relPath;
+                        // Encode URI to handle any spaces safely in Markdown image syntax
+                        return encodeURI(relPath);
                       } catch (error) {
                         console.error('Image upload failed:', error);
                         alert('Failed to upload image');

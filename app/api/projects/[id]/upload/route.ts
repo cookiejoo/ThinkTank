@@ -38,7 +38,9 @@ export async function POST(
     // Generate unique filename to avoid collisions
     const ext = path.extname(file.name);
     const hash = crypto.createHash('md5').update(buffer).digest('hex').substring(0, 8);
-    const filename = `${path.basename(file.name, ext)}-${hash}${ext}`;
+    // Sanitize filename to replace spaces and special characters with hyphens
+    const safeBaseName = path.basename(file.name, ext).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '-');
+    const filename = `${safeBaseName}-${hash}${ext}`;
 
     // Ensure the target directory exists within the project
     const projectRoot = await getProjectRoot(projectId);
