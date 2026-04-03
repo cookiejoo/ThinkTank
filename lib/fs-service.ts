@@ -34,6 +34,7 @@ export interface FileMetadata {
   isHidden?: boolean;
   sortOrder?: number;
   isDeleted?: boolean;
+  deletedAt?: string;
 }
 
 export interface ProjectConfig {
@@ -425,6 +426,7 @@ export async function createFile(projectId: string, filePath: string, isDir: boo
     const relativePath = filePath.startsWith('/') ? filePath : '/' + filePath;
     if (config.files && config.files[relativePath] && config.files[relativePath].isDeleted) {
         config.files[relativePath].isDeleted = false;
+        delete config.files[relativePath].deletedAt;
         await updateProjectConfig(projectId, config);
     }
 }
@@ -447,9 +449,132 @@ export async function deleteFile(projectId: string, filePath: string, physical =
         
         if (!config.files[relativePath]) config.files[relativePath] = {};
         config.files[relativePath].isDeleted = true;
+        config.files[relativePath].deletedAt = new Date().toISOString();
         
         await updateProjectConfig(projectId, config);
     }
+}
+
+export interface TrashedItem {
+  path: string;
+  name: string;
+  isDir: boolean;
+  deletedAt?: string;
+}
+
+export async function listTrashedItems(projectId: string): Promise<TrashedItem[]> {
+  const projectDir = path.join(ROOT_DIR, projectId);
+  const config = await getProjectConfig(projectId);
+  const filesConfig = config.files || {};
+
+  const trashedPaths = Object.entries(filesConfig)
+    .filter(([_, meta]) => Boolean(meta?.isDeleted))
+    .map(([p]) => p);
+
+  const items: TrashedItem[] = [];
+
+  for (const trashedPath of trashedPaths) {
+    const normalized = trashedPath.startsWith('/') ? trashedPath : `/${trashedPath}`;
+    const fullPath = path.join(projectDir, normalized);
+
+    if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
+      continue;
+    }
+
+    let isDir = false;
+    try {
+      const stat = await fs.stat(fullPath);
+      isDir = stat.isDirectory();
+    } catch {
+      isDir = false;
+    }
+
+    const name = path.basename(normalized);
+    const deletedAt = filesConfig[trashedPath]?.deletedAt;
+    items.push({ path: normalized, name, isDir, deletedAt });
+  }
+
+  items.sort((a, b) => {
+    const da = a.deletedAt ? new Date(a.deletedAt).getTime() : 0;
+    const db = b.deletedAt ? new Date(b.deletedAt).getTime() : 0;
+    if (da !== db) return db - da;
+    return a.path.localeCompare(b.path);
+  });
+
+  return items;
+}
+
+export async function restoreTrashedItem(projectId: string, itemPath: string): Promise<void> {
+  const config = await getProjectConfig(projectId);
+  if (!config.files) config.files = {};
+
+  const normalized = itemPath.startsWith('/') ? itemPath : `/${itemPath}`;
+  const meta = config.files[normalized];
+  if (meta) {
+    meta.isDeleted = false;
+    delete meta.deletedAt;
+    if (Object.keys(meta).length === 0) {
+      delete config.files[normalized];
+    }
+  }
+
+  const projectDir = path.join(ROOT_DIR, projectId);
+  const fullPath = path.join(projectDir, normalized);
+  let isDir = false;
+  try {
+    const stat = await fs.stat(fullPath);
+    isDir = stat.isDirectory();
+  } catch {
+    isDir = false;
+  }
+
+  if (isDir) {
+    const prefix = normalized.endsWith('/') ? normalized : `${normalized}/`;
+    for (const [p, m] of Object.entries(config.files)) {
+      if (!p.startsWith(prefix)) continue;
+      if (!m) continue;
+      if (!m.isDeleted) continue;
+      m.isDeleted = false;
+      delete m.deletedAt;
+      if (Object.keys(m).length === 0) {
+        delete config.files[p];
+      }
+    }
+  }
+
+  await updateProjectConfig(projectId, config);
+}
+
+export async function purgeTrashedItem(projectId: string, itemPath: string): Promise<void> {
+  const projectDir = path.join(ROOT_DIR, projectId);
+  const normalized = itemPath.startsWith('/') ? itemPath : `/${itemPath}`;
+  const fullPath = path.join(projectDir, normalized);
+
+  if (!path.resolve(fullPath).startsWith(path.resolve(projectDir))) {
+    throw new Error('Access denied');
+  }
+
+  await fs.rm(fullPath, { recursive: true, force: true });
+
+  const config = await getProjectConfig(projectId);
+  if (!config.files) config.files = {};
+
+  const prefix = normalized.endsWith('/') ? normalized : `${normalized}/`;
+  for (const p of Object.keys(config.files)) {
+    if (p === normalized || p.startsWith(prefix)) {
+      delete config.files[p];
+    }
+  }
+
+  await updateProjectConfig(projectId, config);
+}
+
+export async function emptyTrash(projectId: string): Promise<void> {
+  const items = await listTrashedItems(projectId);
+  const sorted = [...items].sort((a, b) => b.path.length - a.path.length);
+  for (const item of sorted) {
+    await purgeTrashedItem(projectId, item.path);
+  }
 }
 
 export async function getAbsoluteFilePath(projectId: string, filePath: string): Promise<string> {

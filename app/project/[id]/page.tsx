@@ -5,6 +5,7 @@ import { Editor } from '@/components/editor';
 import { HomePage } from '@/components/home-page';
 import { StarredPage } from '@/components/starred-page';
 import { SearchPalette } from '@/components/search-palette';
+import { TrashPage } from '@/components/trash-page';
 import { useUserConfig } from '@/hooks/use-user-config';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -43,12 +44,19 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   }, [projectId]);
   
   const [currentFile, setCurrentFile] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<'home' | 'starred'>('home');
+  const [activeView, setActiveView] = useState<'home' | 'starred' | 'trash'>('home');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSelect = async (path: string) => {
+    if (!path) {
+      setCurrentFile(null);
+      setActiveView('home');
+      setContent('');
+      setLoading(false);
+      return;
+    }
     const isImage = /\.(gif|jpe?g|png|svg|webp)$/i.test(path);
     const isMarkdown = /\.md$/i.test(path);
 
@@ -108,6 +116,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     setActiveView('starred');
   };
 
+  const handleTrashClick = () => {
+    setCurrentFile(null);
+    setActiveView('trash');
+  };
+
   const handleSave = async (newContent: string) => {
     if (!currentFile) return;
     
@@ -130,9 +143,11 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         onHomeClick={handleHomeClick}
         onSearchClick={handleSearchClick}
         onStarredClick={handleStarredClick}
+        onTrashClick={handleTrashClick}
         readOnly={readOnly}
         defaultNav="home"
         onProjectUpdate={handleProjectUpdate}
+        refreshToken={projectVersion}
         backHref="/admin"
         selectedVersion={selectedVersion}
         currentFile={currentFile}
@@ -168,11 +183,13 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                     selectedVersion={selectedVersion}
                     onVersionChange={handleVersionChange}
                 />
-            ) : (
+            ) : activeView === 'starred' ? (
                 <StarredPage 
                     projectId={projectId} 
                     onNavigate={handleSelect}
                 />
+            ) : (
+                <TrashPage projectId={projectId} refreshToken={projectVersion} onChanged={handleProjectUpdate} />
             )
         )}
       </main>

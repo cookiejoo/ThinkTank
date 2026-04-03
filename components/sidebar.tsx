@@ -55,9 +55,11 @@ interface SidebarProps {
   onHomeClick?: () => void;
   onSearchClick?: () => void;
   onStarredClick?: () => void;
+  onTrashClick?: () => void;
   readOnly?: boolean;
-  defaultNav?: 'home' | 'search' | 'starred';
+  defaultNav?: 'home' | 'search' | 'starred' | 'trash';
   onProjectUpdate?: () => void;
+  refreshToken?: number;
   backHref?: string;
   theme?: 'indigo' | 'emerald';
   selectedVersion?: string;
@@ -70,9 +72,11 @@ export function Sidebar({
     onHomeClick,
     onSearchClick,
     onStarredClick,
+    onTrashClick,
     readOnly = false,
     defaultNav,
     onProjectUpdate,
+    refreshToken,
     backHref = "/view",
     theme = 'indigo',
     selectedVersion = 'latest',
@@ -105,9 +109,31 @@ export function Sidebar({
 
   const currentTheme = themeColors[theme];
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [contextMenuNodeId, setContextMenuNodeId] = useState<string | null>(null);
   const treeApiRef = useRef<TreeApi<TreeNode>>(null);
   const [treeLoaded, setTreeLoaded] = useState(false);
+  const contextMenuActiveElRef = useRef<HTMLDivElement | null>(null);
+
+  const clearContextMenuHighlight = () => {
+    if (!contextMenuActiveElRef.current) return;
+    contextMenuActiveElRef.current.classList.remove(
+      'ring-2',
+      'ring-offset-1',
+      'ring-offset-white',
+      'ring-indigo-400',
+      'ring-emerald-400'
+    );
+    contextMenuActiveElRef.current = null;
+  };
+
+  const applyContextMenuHighlight = (el: HTMLDivElement | null) => {
+    if (!el) return;
+    if (contextMenuActiveElRef.current && contextMenuActiveElRef.current !== el) {
+      clearContextMenuHighlight();
+    }
+    const ringColor = theme === 'emerald' ? 'ring-emerald-400' : 'ring-indigo-400';
+    el.classList.add('ring-2', 'ring-offset-1', 'ring-offset-white', ringColor);
+    contextMenuActiveElRef.current = el;
+  };
 
   // Sync external currentFile to internal activeId and expand parent directories
   useEffect(() => {
@@ -172,7 +198,7 @@ export function Sidebar({
   };
 
   const displayData = configLoaded ? filterHiddenNodes(data) : [];
-  const [activeNav, setActiveNav] = useState<'home' | 'search' | 'starred' | 'settings' | null>(defaultNav || null);
+  const [activeNav, setActiveNav] = useState<'home' | 'search' | 'starred' | 'trash' | 'settings' | null>(defaultNav || null);
   const [treeDims, setTreeDims] = useState({ width: 230, height: 500 });
   const treeContainerRef = useRef<HTMLDivElement>(null);
   
@@ -186,7 +212,7 @@ export function Sidebar({
   const [targetNode, setTargetNode] = useState<any>(null);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isPhysicalDelete, setIsPhysicalDelete] = useState(false);
+  const [deleteMode, setDeleteMode] = useState<'trash' | 'permanent'>('trash');
 
   useEffect(() => {
     if (defaultNav) {
@@ -229,7 +255,7 @@ export function Sidebar({
 
   useEffect(() => {
     reloadTree();
-  }, [projectId, selectedVersion]);
+  }, [projectId, selectedVersion, refreshToken]);
 
   const handleSelect = (nodeId: string) => {
     setActiveId(nodeId);
@@ -237,7 +263,7 @@ export function Sidebar({
     onSelect(nodeId);
   };
 
-  const handleNavClick = (nav: 'home' | 'search' | 'starred' | 'settings') => {
+  const handleNavClick = (nav: 'home' | 'search' | 'starred' | 'trash' | 'settings') => {
     if (nav !== 'search') {
       setActiveNav(nav);
       setActiveId(null);
@@ -251,6 +277,9 @@ export function Sidebar({
     }
     if (nav === 'starred' && onStarredClick) {
         onStarredClick();
+    }
+    if (nav === 'trash' && onTrashClick) {
+        onTrashClick();
     }
     if (nav === 'settings') {
         window.location.href = `/project/${projectId}/settings`;
@@ -433,7 +462,7 @@ export function Sidebar({
 
   const handleDelete = async (node: any) => {
       setTargetNode(node);
-      setIsPhysicalDelete(false);
+      setDeleteMode('trash');
       setDeleteDialogOpen(true);
   };
 
@@ -446,10 +475,11 @@ export function Sidebar({
               body: JSON.stringify({
                   projectId,
                   path: targetNode.id,
-                  physical: isPhysicalDelete,
+                  physical: deleteMode === 'permanent',
               })
           });
           reloadTree();
+          onProjectUpdate?.();
           if (activeId === targetNode.id) {
               onSelect('');
           }
@@ -461,12 +491,8 @@ export function Sidebar({
 
   const Node = ({ node, style, dragHandle }: any) => {
     const isFile = !node.isInternal;
-    
-    // Determine if this specific node should be highlighted
-    const isContextMenuActive = contextMenuNodeId !== null;
-    const isSelected = isContextMenuActive 
-      ? node.id === contextMenuNodeId // Only highlight the right-clicked node if a menu is open
-      : node.id === activeId;         // Otherwise, highlight the actively selected file
+    const isSelected = node.id === activeId;
+    const rowRef = useRef<HTMLDivElement | null>(null);
 
     const isStarred = node.data.isStarred;
 
@@ -476,10 +502,27 @@ export function Sidebar({
     const hoverText = isSelected ? '' : currentTheme.hoverText;
 
     return (
-      <ContextMenu onOpenChange={(open) => setContextMenuNodeId(open ? node.id : null)}>
+      <ContextMenu
+        onOpenChange={(open) => {
+          if (open) {
+            applyContextMenuHighlight(rowRef.current);
+          } else {
+            if (contextMenuActiveElRef.current === rowRef.current) {
+              clearContextMenuHighlight();
+            }
+          }
+        }}
+      >
         <ContextMenuTrigger disabled={readOnly && !session} asChild>
             <div
-                ref={dragHandle}
+                ref={(el) => {
+                  rowRef.current = el;
+                  if (typeof dragHandle === 'function') {
+                    dragHandle(el);
+                  } else if (dragHandle && typeof dragHandle === 'object') {
+                    (dragHandle as any).current = el;
+                  }
+                }}
                 style={style}
                 className={cn(
                     `flex items-center h-7 rounded-md cursor-pointer pr-2`,
@@ -487,11 +530,8 @@ export function Sidebar({
                     hoverBg,
                     !node.data.isVisible && 'italic text-gray-400'
                 )}
-                onContextMenu={() => {
-                    // Update state to force a re-render for visual highlight BEFORE Radix context menu opens
-                    setContextMenuNodeId(node.id);
-                }}
-                onClick={() => {
+                onClick={(e) => {
+                    if (e.ctrlKey) return;
                     if (node.isInternal) {
                         node.toggle();
                     } else {
@@ -520,7 +560,7 @@ export function Sidebar({
             {session && <ContextMenuItem onClick={() => handleToggleStar(node)}> {isStarred ? 'Unstar' : 'Star'} </ContextMenuItem>}
             {!readOnly && <ContextMenuItem onClick={() => handleToggleVisibility(node)}> {node.data.isVisible === false ? 'Show' : 'Hide'} </ContextMenuItem>}
             {!readOnly && <ContextMenuItem onClick={() => handleRename(node)}>Rename</ContextMenuItem>}
-            {!readOnly && <ContextMenuItem onClick={() => handleDelete(node)} className="text-red-500">Delete</ContextMenuItem>}
+            {!readOnly && <ContextMenuItem onClick={() => handleDelete(node)} className="text-red-500">Delete…</ContextMenuItem>}
         </ContextMenuContent>
       </ContextMenu>
     );
@@ -553,6 +593,7 @@ export function Sidebar({
           <NavItem icon={Home} label="Home" isActive={activeNav === 'home'} onClick={() => handleNavClick('home')} theme={currentTheme} />
           <NavItem icon={Search} label="Search" isActive={activeNav === 'search'} onClick={() => handleNavClick('search')} theme={currentTheme} />
           {session && <NavItem icon={Star} label="Starred" isActive={activeNav === 'starred'} onClick={() => handleNavClick('starred')} theme={currentTheme} />}
+          {session && !readOnly && <NavItem icon={Trash2} label="Trash" isActive={activeNav === 'trash'} onClick={() => handleNavClick('trash')} theme={currentTheme} />}
           {theme !== 'emerald' && session && (session.user.role === 'admin' || !readOnly) && <NavItem icon={Settings} label="Settings" isActive={activeNav === 'settings'} onClick={() => handleNavClick('settings')} theme={currentTheme} />}
         </nav>
 
@@ -666,18 +707,37 @@ export function Sidebar({
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Are you sure?</DialogTitle>
+              <DialogTitle>Delete {targetNode?.data?.name || 'item'}?</DialogTitle>
               <DialogDescription>
-                This action cannot be undone. This will delete the item.
+                Move to Trash to restore later, or permanently delete.
               </DialogDescription>
             </DialogHeader>
-            <div className="flex items-center space-x-2 mt-4">
-              <Input type="checkbox" id="physical-delete" checked={isPhysicalDelete} onChange={(e) => setIsPhysicalDelete(e.target.checked)} />
-              <Label htmlFor="physical-delete" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Permanently delete</Label>
+            <div className="grid gap-2">
+              <Button
+                type="button"
+                variant={deleteMode === 'trash' ? 'default' : 'outline'}
+                onClick={() => setDeleteMode('trash')}
+                className="justify-start"
+              >
+                Move to Trash
+              </Button>
+              <Button
+                type="button"
+                variant={deleteMode === 'permanent' ? 'destructive' : 'outline'}
+                onClick={() => setDeleteMode('permanent')}
+                className="justify-start"
+              >
+                Delete Permanently
+              </Button>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-              <Button variant="destructive" onClick={submitDelete}>Delete</Button>
+              <Button
+                variant={deleteMode === 'permanent' ? 'destructive' : 'default'}
+                onClick={submitDelete}
+              >
+                {deleteMode === 'permanent' ? 'Delete' : 'Move to Trash'}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

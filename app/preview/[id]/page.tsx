@@ -34,6 +34,13 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   }, [projectId]);
 
   const handleSelect = async (path: string) => {
+    if (!path) {
+      setCurrentFile(null);
+      setActiveView('home');
+      setContent('');
+      setLoading(false);
+      return;
+    }
     const isImage = /\.(gif|jpe?g|png|svg|webp)$/i.test(path);
     const isMarkdown = /\.md$/i.test(path);
 
