@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { useI18n } from '@/components/i18n-provider';
 
 interface UserData {
   id: string;
@@ -22,6 +23,7 @@ interface Project {
 }
 
 export function UserManagement() {
+  const { t } = useI18n();
   const [users, setUsers] = useState<UserData[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
@@ -80,7 +82,7 @@ export function UserManagement() {
         setNewRole('user');
         loadData();
       } else {
-        alert('Failed to create user');
+        alert(t('users.createFailed'));
       }
     } catch (e) {
       console.error(e);
@@ -99,7 +101,7 @@ export function UserManagement() {
         setEditingUser(null);
         loadData();
       } else {
-        alert('Failed to update user');
+        alert(t('users.updateFailed'));
       }
     } catch (e) {
       console.error(e);
@@ -122,9 +124,9 @@ export function UserManagement() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">User Management</h2>
+        <h2 className="text-xl font-semibold">{t('users.title')}</h2>
         <Button onClick={() => setShowCreateModal(true)}>
-          <Plus size={16} className="mr-2" /> Add User
+          <Plus size={16} className="mr-2" /> {t('users.add')}
         </Button>
       </div>
 
@@ -132,10 +134,10 @@ export function UserManagement() {
         <table className="w-full text-sm text-left">
           <thead className="bg-slate-50 border-b">
             <tr>
-              <th className="px-4 py-3 font-medium text-slate-500">User</th>
-              <th className="px-4 py-3 font-medium text-slate-500">Role</th>
-              <th className="px-4 py-3 font-medium text-slate-500">Access</th>
-              <th className="px-4 py-3 font-medium text-slate-500 text-right">Actions</th>
+              <th className="px-4 py-3 font-medium text-slate-500">{t('users.col.user')}</th>
+              <th className="px-4 py-3 font-medium text-slate-500">{t('users.col.role')}</th>
+              <th className="px-4 py-3 font-medium text-slate-500">{t('users.col.access')}</th>
+              <th className="px-4 py-3 font-medium text-slate-500 text-right">{t('users.col.actions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -155,12 +157,12 @@ export function UserManagement() {
                 <td className="px-4 py-3 text-slate-500">
                     {user.role === 'admin' ? (
                         <span className="text-xs italic text-green-600 flex items-center gap-1">
-                            <Shield size={12} /> Full Access
+                            <Shield size={12} /> {t('users.fullAccess')}
                         </span>
                     ) : (
                         <div className="flex flex-wrap gap-1">
                             {user.accessibleProjects.length === 0 ? (
-                                <span className="text-xs italic text-slate-400">No projects</span>
+                                <span className="text-xs italic text-slate-400">{t('users.noProjects')}</span>
                             ) : (
                                 user.accessibleProjects.map(pid => (
                                     <span key={pid} className="bg-slate-100 px-1.5 py-0.5 rounded text-xs border">
@@ -173,7 +175,7 @@ export function UserManagement() {
                 </td>
                 <td className="px-4 py-3 text-right">
                     <Button variant="ghost" size="sm" onClick={() => setEditingUser(user)}>
-                        Edit
+                        {t('action.edit')}
                     </Button>
                 </td>
               </tr>
@@ -186,19 +188,19 @@ export function UserManagement() {
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New User</DialogTitle>
+            <DialogTitle>{t('users.createTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>Username</Label>
+              <Label>{t('login.username')}</Label>
               <Input value={newUsername} onChange={e => setNewUsername(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Password</Label>
+              <Label>{t('login.password')}</Label>
               <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Role</Label>
+              <Label>{t('users.role')}</Label>
               <div className="flex gap-4">
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input 
@@ -207,7 +209,7 @@ export function UserManagement() {
                         checked={newRole === 'user'} 
                         onChange={() => setNewRole('user')}
                       />
-                      User
+                      {t('users.role.user')}
                   </label>
                   <label className="flex items-center gap-2 text-sm cursor-pointer">
                       <input 
@@ -216,14 +218,14 @@ export function UserManagement() {
                         checked={newRole === 'admin'} 
                         onChange={() => setNewRole('admin')}
                       />
-                      Admin
+                      {t('users.role.admin')}
                   </label>
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>Cancel</Button>
-            <Button onClick={handleCreate}>Create User</Button>
+            <Button variant="outline" onClick={() => setShowCreateModal(false)}>{t('action.cancel')}</Button>
+            <Button onClick={handleCreate}>{t('users.create')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -232,13 +234,13 @@ export function UserManagement() {
       <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Edit User: {editingUser?.username}</DialogTitle>
+            <DialogTitle>{t('users.editTitle', { username: editingUser?.username || '' })}</DialogTitle>
           </DialogHeader>
           
           {editingUser && (
               <div className="space-y-6 py-4">
                 <div className="space-y-2">
-                  <Label>Role</Label>
+                  <Label>{t('users.role')}</Label>
                   <div className="flex gap-4 border p-3 rounded bg-slate-50">
                       <label className="flex items-center gap-2 text-sm cursor-pointer">
                           <input 
@@ -247,7 +249,7 @@ export function UserManagement() {
                             checked={editingUser.role === 'user'} 
                             onChange={() => setEditingUser({...editingUser, role: 'user'})}
                           />
-                          User (Restricted Access)
+                          {t('users.role.userRestricted')}
                       </label>
                       <label className="flex items-center gap-2 text-sm cursor-pointer">
                           <input 
@@ -256,18 +258,18 @@ export function UserManagement() {
                             checked={editingUser.role === 'admin'} 
                             onChange={() => setEditingUser({...editingUser, role: 'admin'})}
                           />
-                          Admin (Full Access)
+                          {t('users.role.adminFull')}
                       </label>
                   </div>
                 </div>
 
                 {editingUser.role === 'user' && (
                     <div className="space-y-3">
-                        <Label>Project Access</Label>
+                        <Label>{t('users.projectAccess')}</Label>
                         <div className="border p-4 rounded max-h-80 overflow-y-auto space-y-4">
                             {Array.from(
                                 projects.reduce((acc, project) => {
-                                    const groupName = project.group || '其他项目';
+                                    const groupName = project.group || t('preview.otherGroup');
                                     if (!acc.has(groupName)) {
                                         acc.set(groupName, []);
                                     }
@@ -300,8 +302,8 @@ export function UserManagement() {
                 )}
                 
                 <div className="space-y-2">
-                    <Label>Change Password (Optional)</Label>
-                    <Input type="password" placeholder="New password" onChange={(e) => {
+                    <Label>{t('users.changePassword')}</Label>
+                    <Input type="password" placeholder={t('users.newPassword')} onChange={(e) => {
                          // We handle this by adding a temporary password field to the object being sent, 
                          // but for UI state simplicity here we might need a separate state or just attach it
                          (editingUser as any).password = e.target.value;
@@ -311,8 +313,8 @@ export function UserManagement() {
           )}
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
-            <Button onClick={() => editingUser && handleUpdate(editingUser)}>Save Changes</Button>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>{t('action.cancel')}</Button>
+            <Button onClick={() => editingUser && handleUpdate(editingUser)}>{t('settings.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

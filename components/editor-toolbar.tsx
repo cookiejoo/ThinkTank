@@ -27,6 +27,7 @@ import {
 import { cn } from '@/lib/utils';
 
 import { useState, useRef } from 'react';
+import { useI18n } from '@/components/i18n-provider';
 import {
   Dialog,
   DialogContent,
@@ -44,6 +45,7 @@ interface ToolbarProps {
 }
 
 export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
+  const { t } = useI18n();
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
@@ -130,14 +132,14 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
         <ToolbarButton
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
-          title="Undo"
+          title={t('toolbar.undo')}
         >
           <Undo size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
-          title="Redo"
+          title={t('toolbar.redo')}
         >
           <Redo size={16} />
         </ToolbarButton>
@@ -149,21 +151,21 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
           isActive={editor.isActive('heading', { level: 1 })}
-          title="Heading 1"
+          title={t('toolbar.h1')}
         >
           <Heading1 size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
           isActive={editor.isActive('heading', { level: 2 })}
-          title="Heading 2"
+          title={t('toolbar.h2')}
         >
           <Heading2 size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
           isActive={editor.isActive('heading', { level: 3 })}
-          title="Heading 3"
+          title={t('toolbar.h3')}
         >
           <Heading3 size={16} />
         </ToolbarButton>
@@ -175,35 +177,35 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBold().run()}
           isActive={editor.isActive('bold')}
-          title="Bold"
+          title={t('toolbar.bold')}
         >
           <Bold size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleItalic().run()}
           isActive={editor.isActive('italic')}
-          title="Italic"
+          title={t('toolbar.italic')}
         >
           <Italic size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleUnderline().run()}
           isActive={editor.isActive('underline')}
-          title="Underline"
+          title={t('toolbar.underline')}
         >
           <UnderlineIcon size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleStrike().run()}
           isActive={editor.isActive('strike')}
-          title="Strike"
+          title={t('toolbar.strike')}
         >
           <Strikethrough size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleCode().run()}
           isActive={editor.isActive('code')}
-          title="Code"
+          title={t('toolbar.code')}
         >
           <Code size={16} />
         </ToolbarButton>
@@ -215,21 +217,21 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBulletList().run()}
           isActive={editor.isActive('bulletList')}
-          title="Bullet List"
+          title={t('toolbar.bulletList')}
         >
           <List size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleOrderedList().run()}
           isActive={editor.isActive('orderedList')}
-          title="Ordered List"
+          title={t('toolbar.orderedList')}
         >
           <ListOrdered size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().toggleBlockquote().run()}
           isActive={editor.isActive('blockquote')}
-          title="Blockquote"
+          title={t('toolbar.blockquote')}
         >
           <Quote size={16} />
         </ToolbarButton>
@@ -241,28 +243,28 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('left').run()}
           isActive={editor.isActive({ textAlign: 'left' })}
-          title="Align Left"
+          title={t('toolbar.alignLeft')}
         >
           <AlignLeft size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('center').run()}
           isActive={editor.isActive({ textAlign: 'center' })}
-          title="Align Center"
+          title={t('toolbar.alignCenter')}
         >
           <AlignCenter size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('right').run()}
           isActive={editor.isActive({ textAlign: 'right' })}
-          title="Align Right"
+          title={t('toolbar.alignRight')}
         >
           <AlignRight size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setTextAlign('justify').run()}
           isActive={editor.isActive({ textAlign: 'justify' })}
-          title="Justify"
+          title={t('toolbar.justify')}
         >
           <AlignJustify size={16} />
         </ToolbarButton>
@@ -274,25 +276,25 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
         <ToolbarButton
           onClick={openLinkDialog}
           isActive={editor.isActive('link')}
-          title="Link"
+          title={t('toolbar.link')}
         >
           <LinkIcon size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={openImageDialog}
-          title="Image"
+          title={t('toolbar.image')}
         >
           <ImageIcon size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().insertContent('```mermaid\ngraph TD\n  A[Start] --> B[End]\n```').run()}
-          title="Mermaid Diagram"
+          title={t('toolbar.mermaid')}
         >
           <Workflow size={16} />
         </ToolbarButton>
         <ToolbarButton
           onClick={() => editor.chain().focus().setHorizontalRule().run()}
-          title="Horizontal Rule"
+          title={t('toolbar.hr')}
         >
           <Minus size={16} />
         </ToolbarButton>
@@ -301,10 +303,10 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
       <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Insert Link</DialogTitle>
+            <DialogTitle>{t('toolbar.insertLink')}</DialogTitle>
           </DialogHeader>
           <div className="py-2">
-            <Label htmlFor="link-url">URL</Label>
+            <Label htmlFor="link-url">{t('toolbar.url')}</Label>
             <Input 
                 id="link-url" 
                 value={linkUrl} 
@@ -314,8 +316,8 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>Cancel</Button>
-            <Button onClick={submitLink}>Save</Button>
+            <Button variant="outline" onClick={() => setLinkDialogOpen(false)}>{t('action.cancel')}</Button>
+            <Button onClick={submitLink}>{t('action.save')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -323,11 +325,11 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
       <Dialog open={imageDialogOpen} onOpenChange={setImageDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Insert Image</DialogTitle>
+            <DialogTitle>{t('toolbar.insertImage')}</DialogTitle>
           </DialogHeader>
           <div className="py-2 space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="image-url">Image URL</Label>
+              <Label htmlFor="image-url">{t('toolbar.imageUrl')}</Label>
               <Input 
                   id="image-url" 
                   value={imageUrl} 
@@ -338,7 +340,7 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
             </div>
             {onUploadImage && (
               <div className="space-y-2">
-                <Label>Or Upload Image</Label>
+                <Label>{t('toolbar.orUpload')}</Label>
                 <div className="flex items-center gap-2">
                   <Input 
                     type="file" 
@@ -353,15 +355,15 @@ export function Toolbar({ editor, onUploadImage }: ToolbarProps) {
                     onClick={() => fileInputRef.current?.click()}
                     className="w-full"
                   >
-                    Select File
+                    {t('toolbar.selectFile')}
                   </Button>
                 </div>
               </div>
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setImageDialogOpen(false)}>Cancel</Button>
-            <Button onClick={submitImage}>Insert URL</Button>
+            <Button variant="outline" onClick={() => setImageDialogOpen(false)}>{t('action.cancel')}</Button>
+            <Button onClick={submitImage}>{t('toolbar.insertUrl')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

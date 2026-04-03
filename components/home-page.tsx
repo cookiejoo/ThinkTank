@@ -6,6 +6,7 @@ import { FileText, Star, Clock, BookOpen, Edit2, Check, X, ChevronsUpDown, Info 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useUserConfig } from '@/hooks/use-user-config';
+import { useI18n } from '@/components/i18n-provider';
 import {
   Command,
   CommandEmpty,
@@ -44,6 +45,7 @@ export function HomePage({
     selectedVersion?: string,
     onVersionChange?: (version: string) => void
 }) {
+  const { t } = useI18n();
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
   const { data: session } = useSession();
@@ -120,11 +122,11 @@ export function HomePage({
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center h-full text-gray-400">Loading dashboard...</div>;
+    return <div className="flex items-center justify-center h-full text-gray-400">{t('home.loading')}</div>;
   }
 
   if (!data || !configLoaded) {
-    return <div className="flex items-center justify-center h-full text-gray-400">Failed to load dashboard</div>;
+    return <div className="flex items-center justify-center h-full text-gray-400">{t('home.loadFailed')}</div>;
   }
 
   const FileList = ({ files, icon: Icon, title, emptyText }: any) => (
@@ -172,7 +174,7 @@ export function HomePage({
             <div className="flex justify-between items-start mb-10">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Welcome to {projectId}
+                    {t('home.welcome', { projectId })}
                     </h1>
                     <div className="min-h-[1.5rem] relative group">
                         {isEditingDesc ? (
@@ -181,17 +183,17 @@ export function HomePage({
                                     className="w-full min-h-[80px] p-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-600 bg-white"
                                     value={descInput}
                                     onChange={(e) => setDescInput(e.target.value)}
-                                    placeholder="Add a description for this project..."
+                                    placeholder={t('home.descPlaceholder')}
                                 />
                                 <div className="flex gap-2">
                                     <Button size="sm" onClick={handleSaveDescription} className="h-7 px-2">
-                                        <Check size={14} className="mr-1" /> Save
+                                        <Check size={14} className="mr-1" /> {t('action.save')}
                                     </Button>
                                     <Button size="sm" variant="outline" onClick={() => {
                                         setIsEditingDesc(false);
                                         setDescInput(data.description || '');
                                     }} className="h-7 px-2">
-                                        <X size={14} className="mr-1" /> Cancel
+                                        <X size={14} className="mr-1" /> {t('action.cancel')}
                                     </Button>
                                 </div>
                             </div>
@@ -199,7 +201,7 @@ export function HomePage({
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-start gap-2">
                                 <p className="text-gray-500">
-                                    {data.description || (readOnly ? 'Browse the knowledge base and documentation.' : 'Manage your knowledge base, documentation, and ideas.')}
+                                    {data.description || (readOnly ? t('home.descReadOnly') : t('home.descEditable'))}
                                 </p>
                                 {!readOnly && (
                                     <Button 
@@ -207,7 +209,7 @@ export function HomePage({
                                         size="icon"
                                         onClick={() => setIsEditingDesc(true)}
                                         className="opacity-0 group-hover:opacity-100 h-6 w-6 text-gray-400 hover:text-gray-700"
-                                        title="Edit Description"
+                                        title={t('home.editDesc')}
                                     >
                                         <Edit2 size={12} />
                                     </Button>
@@ -227,9 +229,9 @@ export function HomePage({
                                             </PopoverTrigger>
                                             <PopoverContent className="p-0 w-[200px]">
                                                 <Command>
-                                                    <CommandInput placeholder="Select group..." />
+                                                    <CommandInput placeholder={t('home.groupSelect')} />
                                                     <CommandList>
-                                                        <CommandEmpty>No group found.</CommandEmpty>
+                                                        <CommandEmpty>{t('home.groupEmpty')}</CommandEmpty>
                                                         <CommandGroup>
                                                             {availableGroups.map((group) => (
                                                                 <CommandItem
@@ -267,10 +269,10 @@ export function HomePage({
                 {versions.length > 0 && (
                     <Select onValueChange={onVersionChange} value={selectedVersion}>
                         <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select version" />
+                            <SelectValue placeholder={t('home.selectVersion')} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="latest">Latest</SelectItem>
+                            <SelectItem value="latest">{t('home.latest')}</SelectItem>
                             {versions.map(v => (
                                 <SelectItem key={v} value={v}>{v}</SelectItem>
                             ))}
@@ -282,8 +284,8 @@ export function HomePage({
             {/* Starred & Recent */}
             {session && (
                 <>
-                    <FileList files={userConfig.starred} icon={Star} title="Starred Documents" emptyText="You haven't starred any documents in this project yet." />
-                    <FileList files={userConfig.recent} icon={Clock} title="Recently Visited" emptyText="You haven't visited any documents in this project yet." />
+                    <FileList files={userConfig.starred} icon={Star} title={t('home.starredTitle')} emptyText={t('home.starredEmpty')} />
+                    <FileList files={userConfig.recent} icon={Clock} title={t('home.recentTitle')} emptyText={t('home.recentEmpty')} />
                 </>
             )}
 

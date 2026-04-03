@@ -7,11 +7,13 @@ import { StarredPage } from '@/components/starred-page';
 import { SearchPalette } from '@/components/search-palette';
 import { TrashPage } from '@/components/trash-page';
 import { useUserConfig } from '@/hooks/use-user-config';
+import { useI18n } from '@/components/i18n-provider';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Info } from 'lucide-react';
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useI18n();
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
   const [readOnly, setReadOnly] = useState(false);
@@ -155,7 +157,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       <main className="flex-1 flex flex-col overflow-hidden h-full">
         {currentFile ? (
             loading ? (
-                <div className="flex items-center justify-center h-full">Loading...</div>
+                <div className="flex items-center justify-center h-full">{t('home.loading')}</div>
             ) : (
                 <Editor
                     key={currentFile}

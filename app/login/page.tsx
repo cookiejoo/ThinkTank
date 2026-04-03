@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Lock, Github, Eye, EyeOff } from 'lucide-react';
+import { useI18n } from '@/components/i18n-provider';
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 // Simple Google Icon Component since Lucide doesn't have it
 const GoogleIcon = ({ className }: { className?: string }) => (
@@ -20,6 +22,7 @@ const GoogleIcon = ({ className }: { className?: string }) => (
 );
 
 export default function LoginPage() {
+  const { t } = useI18n();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,14 +44,17 @@ export default function LoginPage() {
     });
 
     if (res?.error) {
-      setError('Invalid username or password');
+      setError(t('login.invalid'));
     } else {
       router.push('/');
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-50">
+    <div className="relative flex items-center justify-center min-h-screen bg-slate-50">
+      <div className="absolute top-6 right-6">
+        <LanguageSwitcher variant="button" />
+      </div>
       <Card className="w-[350px]">
         <CardHeader>
           <div className="flex justify-center mb-4">
@@ -56,13 +62,13 @@ export default function LoginPage() {
                 <Lock className="w-6 h-6 text-indigo-600" />
             </div>
           </div>
-          <CardTitle className="text-center">ThinkTank Login</CardTitle>
-          <CardDescription className="text-center">Enter your credentials to access</CardDescription>
+          <CardTitle className="text-center">{t('login.title')}</CardTitle>
+          <CardDescription className="text-center">{t('login.desc')}</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="username">{t('login.username')}</Label>
               <Input 
                 id="username" 
                 value={username}
@@ -70,7 +76,7 @@ export default function LoginPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">{t('login.password')}</Label>
               <div className="relative">
                 <Input 
                   id="password" 
@@ -83,7 +89,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? t('login.hidePassword') : t('login.showPassword')}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -96,11 +102,11 @@ export default function LoginPage() {
               type="submit" 
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 transition-colors"
             >
-              Sign In
+              {t('action.signIn')}
             </Button>
             <div className="text-center text-sm">
               <a href="/" className="text-indigo-600 hover:underline">
-                Back to Guest View
+                {t('login.back')}
               </a>
             </div>
           </CardFooter>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useI18n } from '@/components/i18n-provider';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ export function TrashPage({
   refreshToken?: number;
   onChanged?: () => void;
 }) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<TrashedItem[]>([]);
   const [purgeTarget, setPurgeTarget] = useState<TrashedItem | null>(null);
@@ -96,9 +98,9 @@ export function TrashPage({
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
               <Trash2 className="mr-3 text-gray-800" size={32} />
-              Trash
+              {t('trash.title')}
             </h1>
-            <p className="text-gray-500">Items moved here can be restored or permanently deleted.</p>
+            <p className="text-gray-500">{t('trash.desc')}</p>
           </div>
 
           <Button
@@ -106,18 +108,18 @@ export function TrashPage({
             disabled={!hasItems}
             onClick={() => setEmptyConfirmOpen(true)}
           >
-            Empty Trash
+            {t('trash.empty')}
           </Button>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center h-[40vh] text-gray-400">Loading trash…</div>
+          <div className="flex items-center justify-center h-[40vh] text-gray-400">{t('trash.loading')}</div>
         ) : hasItems ? (
           <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
             <div className="grid grid-cols-12 px-4 py-3 bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500">
-              <div className="col-span-7">Path</div>
-              <div className="col-span-3">Deleted</div>
-              <div className="col-span-2 text-right">Actions</div>
+              <div className="col-span-7">{t('trash.col.path')}</div>
+              <div className="col-span-3">{t('trash.col.deleted')}</div>
+              <div className="col-span-2 text-right">{t('trash.col.actions')}</div>
             </div>
             <div className="divide-y divide-gray-100">
               {formattedItems.map((item) => (
@@ -137,14 +139,14 @@ export function TrashPage({
                       className="gap-1"
                     >
                       <RotateCcw size={14} />
-                      Restore
+                      {t('trash.restore')}
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => setPurgeTarget(item)}
                     >
-                      Delete
+                      {t('trash.delete')}
                     </Button>
                   </div>
                 </div>
@@ -156,9 +158,9 @@ export function TrashPage({
             <div className="p-4 bg-gray-50 rounded-full mb-4">
               <Trash2 size={40} className="text-gray-300" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">Trash is empty</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">{t('trash.emptyStateTitle')}</h3>
             <p className="text-gray-500 text-sm max-w-sm text-center">
-              Deleted files and folders will appear here.
+              {t('trash.emptyStateDesc')}
             </p>
           </div>
         )}
@@ -167,14 +169,14 @@ export function TrashPage({
       <Dialog open={Boolean(purgeTarget)} onOpenChange={(open) => !open && setPurgeTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Permanently</DialogTitle>
+            <DialogTitle>{t('trash.deletePermanentlyTitle')}</DialogTitle>
             <DialogDescription>
-              This will permanently delete {purgeTarget?.name}. This action cannot be undone.
+              {t('trash.deletePermanentlyDesc', { name: purgeTarget?.name || '' })}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPurgeTarget(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => purgeTarget && purge(purgeTarget)}>Delete</Button>
+            <Button variant="outline" onClick={() => setPurgeTarget(null)}>{t('action.cancel')}</Button>
+            <Button variant="destructive" onClick={() => purgeTarget && purge(purgeTarget)}>{t('action.delete')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -182,14 +184,14 @@ export function TrashPage({
       <Dialog open={emptyConfirmOpen} onOpenChange={setEmptyConfirmOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Empty Trash</DialogTitle>
+            <DialogTitle>{t('trash.emptyTitle')}</DialogTitle>
             <DialogDescription>
-              This will permanently delete all items in Trash. This action cannot be undone.
+              {t('trash.emptyDesc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEmptyConfirmOpen(false)}>Cancel</Button>
-            <Button variant="destructive" onClick={emptyTrash}>Empty</Button>
+            <Button variant="outline" onClick={() => setEmptyConfirmOpen(false)}>{t('action.cancel')}</Button>
+            <Button variant="destructive" onClick={emptyTrash}>{t('trash.emptyConfirm')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

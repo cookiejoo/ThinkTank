@@ -12,6 +12,7 @@ import { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { FileCode, Eye, Columns, Pencil, List, Info } from 'lucide-react';
 import matter from 'gray-matter';
+import { useI18n } from '@/components/i18n-provider';
 
 import { ExtendedCodeBlock as Mermaid } from './extensions/mermaid';
 import { CodeBlockExtension } from './extensions/code-block-lowlight';
@@ -48,6 +49,7 @@ export function Editor({
     basePath = '/preview',
     theme = 'indigo'
 }: EditorProps) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<'edit' | 'source' | 'split' | 'preview'>('edit');
   const [showToc, setShowToc] = useState(readOnly);
   const [sourceContent, setSourceContent] = useState(initialContent);
@@ -668,34 +670,34 @@ useState(() => {
             <button
               onClick={() => setMode('edit')}
               className={cn("p-1.5 rounded text-sm flex items-center gap-1", mode === 'edit' ? "bg-white shadow text-black" : "text-gray-600 hover:bg-white/50")}
-              title="Edit"
+              title={t('editor.mode.edit')}
             >
               <Pencil size={16} />
-              <span className="text-xs">Edit</span>
+              <span className="text-xs">{t('editor.mode.edit')}</span>
             </button>
             <button
               onClick={() => setMode('source')}
               className={cn("p-1.5 rounded text-sm flex items-center gap-1", mode === 'source' ? "bg-white shadow text-black" : "text-gray-600 hover:bg-white/50")}
-              title="Source"
+              title={t('editor.mode.source')}
             >
               <FileCode size={16} />
-              <span className="text-xs">Source</span>
+              <span className="text-xs">{t('editor.mode.source')}</span>
             </button>
             <button
               onClick={() => setMode('split')}
               className={cn("p-1.5 rounded text-sm flex items-center gap-1", mode === 'split' ? "bg-white shadow text-black" : "text-gray-600 hover:bg-white/50")}
-              title="Split"
+              title={t('editor.mode.split')}
             >
               <Columns size={16} />
-              <span className="text-xs">Split</span>
+              <span className="text-xs">{t('editor.mode.split')}</span>
             </button>
             <button
               onClick={() => setMode('preview')}
               className={cn("p-1.5 rounded text-sm flex items-center gap-1", mode === 'preview' ? "bg-white shadow text-black" : "text-gray-600 hover:bg-white/50")}
-              title="Preview"
+              title={t('editor.mode.preview')}
             >
               <Eye size={16} />
-              <span className="text-xs">Preview</span>
+              <span className="text-xs">{t('editor.mode.preview')}</span>
             </button>
           </div>
         )}
@@ -704,10 +706,10 @@ useState(() => {
             {versions.length > 0 && (
                 <Select onValueChange={onVersionChange} value={selectedVersion}>
                     <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select version" />
+                        <SelectValue placeholder={t('editor.selectVersion')} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="latest">Latest</SelectItem>
+                        <SelectItem value="latest">{t('editor.latest')}</SelectItem>
                         {versions.map(v => (
                             <SelectItem key={v} value={v}>{v}</SelectItem>
                         ))}
@@ -722,7 +724,7 @@ useState(() => {
                         ? (theme === 'emerald' ? 'bg-emerald-50 text-emerald-600' : 'bg-indigo-50 text-indigo-600')
                         : (theme === 'emerald' ? 'hover:bg-emerald-50 hover:text-emerald-900' : 'hover:bg-indigo-50 hover:text-indigo-900')
                 )}
-                title="Toggle Table of Contents"
+                title={t('editor.toc')}
             >
                 <List size={18} />
             </button>

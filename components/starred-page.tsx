@@ -2,12 +2,14 @@
 
 import { FileText, Star } from 'lucide-react';
 import { useUserConfig } from '@/hooks/use-user-config';
+import { useI18n } from '@/components/i18n-provider';
 
 export function StarredPage({ projectId, onNavigate }: { projectId: string, onNavigate: (path: string) => void }) {
+  const { t } = useI18n();
   const { config: userConfig, loaded: configLoaded } = useUserConfig(projectId);
 
   if (!configLoaded) {
-    return <div className="flex items-center justify-center h-full text-gray-400">Loading starred documents...</div>;
+    return <div className="flex items-center justify-center h-full text-gray-400">{t('starred.loading')}</div>;
   }
 
   const files = userConfig.starred;
@@ -18,9 +20,9 @@ export function StarredPage({ projectId, onNavigate }: { projectId: string, onNa
         <div className="mb-10">
           <h1 className="text-3xl font-bold text-gray-900 mb-2 flex items-center">
             <Star className="mr-3 text-yellow-500 fill-yellow-500" size={32} />
-            Starred Documents
+            {t('starred.title')}
           </h1>
-          <p className="text-gray-500">Quick access to your most important documentation.</p>
+          <p className="text-gray-500">{t('starred.desc')}</p>
         </div>
 
         {files.length > 0 ? (
@@ -50,9 +52,9 @@ export function StarredPage({ projectId, onNavigate }: { projectId: string, onNa
             <div className="p-4 bg-gray-50 rounded-full mb-4">
                 <Star size={40} className="text-gray-300" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No starred documents yet</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-1">{t('starred.emptyTitle')}</h3>
             <p className="text-gray-500 text-sm max-w-sm text-center">
-              Click the star icon in the sidebar or right-click any document to add it to your favorites for quick access.
+              {t('starred.emptyDesc')}
             </p>
           </div>
         )}

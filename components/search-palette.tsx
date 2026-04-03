@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, FileText, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/components/i18n-provider';
 
 interface SearchPaletteProps {
   projectId: string;
@@ -25,6 +26,7 @@ interface FlatNode {
 }
 
 export function SearchPalette({ projectId, isOpen, onClose, onSelect }: SearchPaletteProps) {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [files, setFiles] = useState<FlatNode[]>([]);
   const [filteredFiles, setFilteredFiles] = useState<FlatNode[]>([]);
@@ -110,7 +112,7 @@ export function SearchPalette({ projectId, isOpen, onClose, onSelect }: SearchPa
             ref={inputRef}
             type="text"
             className="flex-1 text-base outline-none placeholder:text-slate-400 text-slate-800"
-            placeholder="Search files..."
+            placeholder={t('search.placeholder')}
             value={query}
             onChange={e => setQuery(e.target.value)}
           />
@@ -141,20 +143,20 @@ export function SearchPalette({ projectId, isOpen, onClose, onSelect }: SearchPa
             ))
           ) : (
             <div className="py-8 text-center text-slate-400 text-sm">
-              No results found.
+              {t('search.noResults')}
             </div>
           )}
         </div>
         
         <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 text-xs text-slate-400 flex items-center justify-between">
             <span>
-                <span className="font-medium text-slate-500">↑↓</span> to navigate
+                <span className="font-medium text-slate-500">↑↓</span> {t('search.hintNavigate')}
             </span>
             <span>
-                <span className="font-medium text-slate-500">Enter</span> to select
+                <span className="font-medium text-slate-500">Enter</span> {t('search.hintSelect')}
             </span>
             <span>
-                <span className="font-medium text-slate-500">Esc</span> to close
+                <span className="font-medium text-slate-500">Esc</span> {t('search.hintClose')}
             </span>
         </div>
       </div>

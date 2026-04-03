@@ -39,6 +39,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useI18n } from '@/components/i18n-provider';
 
 interface TreeNode {
   id: string;
@@ -82,6 +83,7 @@ export function Sidebar({
     selectedVersion = 'latest',
     currentFile
 }: SidebarProps) {
+  const { t } = useI18n();
   const [data, setData] = useState<TreeNode[]>([]);
   
   const themeColors = {
@@ -555,12 +557,12 @@ export function Sidebar({
             </div>
         </ContextMenuTrigger>
         <ContextMenuContent>
-            {node.isInternal && !readOnly && <ContextMenuItem onClick={() => handleCreate('file', node)}>New File</ContextMenuItem>}
-            {node.isInternal && !readOnly && <ContextMenuItem onClick={() => handleCreate('folder', node)}>New Folder</ContextMenuItem>}
-            {session && <ContextMenuItem onClick={() => handleToggleStar(node)}> {isStarred ? 'Unstar' : 'Star'} </ContextMenuItem>}
-            {!readOnly && <ContextMenuItem onClick={() => handleToggleVisibility(node)}> {node.data.isVisible === false ? 'Show' : 'Hide'} </ContextMenuItem>}
-            {!readOnly && <ContextMenuItem onClick={() => handleRename(node)}>Rename</ContextMenuItem>}
-            {!readOnly && <ContextMenuItem onClick={() => handleDelete(node)} className="text-red-500">Delete…</ContextMenuItem>}
+            {node.isInternal && !readOnly && <ContextMenuItem onClick={() => handleCreate('file', node)}>{t('files.newFile')}</ContextMenuItem>}
+            {node.isInternal && !readOnly && <ContextMenuItem onClick={() => handleCreate('folder', node)}>{t('files.newFolder')}</ContextMenuItem>}
+            {session && <ContextMenuItem onClick={() => handleToggleStar(node)}>{isStarred ? t('files.unstar') : t('files.star')}</ContextMenuItem>}
+            {!readOnly && <ContextMenuItem onClick={() => handleToggleVisibility(node)}>{node.data.isVisible === false ? t('files.show') : t('files.hide')}</ContextMenuItem>}
+            {!readOnly && <ContextMenuItem onClick={() => handleRename(node)}>{t('action.rename')}</ContextMenuItem>}
+            {!readOnly && <ContextMenuItem onClick={() => handleDelete(node)} className="text-red-500">{t('action.delete')}…</ContextMenuItem>}
         </ContextMenuContent>
       </ContextMenu>
     );
@@ -578,27 +580,27 @@ export function Sidebar({
     <TooltipProvider>
       <aside className="w-64 flex-shrink-0 border-r bg-gray-50 flex flex-col h-full">
         <div className="p-3 flex items-center justify-between border-b h-[53px]">
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0 flex-1 overflow-hidden">
               <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center mr-2", currentTheme.avatarBg)}>
                   <span className={cn("font-bold text-lg", currentTheme.avatarText)}>{projectId.charAt(0).toUpperCase()}</span>
               </div>
               <h2 className="font-bold text-lg text-gray-800 truncate">{projectId}</h2>
           </div>
-          <Link href={backHref} className="text-gray-500 hover:text-gray-800">
+          <Link href={backHref} className="text-gray-500 hover:text-gray-800 flex-shrink-0 relative z-10">
               <ArrowLeft size={20} />
           </Link>
         </div>
 
         <nav className="p-2">
-          <NavItem icon={Home} label="Home" isActive={activeNav === 'home'} onClick={() => handleNavClick('home')} theme={currentTheme} />
-          <NavItem icon={Search} label="Search" isActive={activeNav === 'search'} onClick={() => handleNavClick('search')} theme={currentTheme} />
-          {session && <NavItem icon={Star} label="Starred" isActive={activeNav === 'starred'} onClick={() => handleNavClick('starred')} theme={currentTheme} />}
-          {session && !readOnly && <NavItem icon={Trash2} label="Trash" isActive={activeNav === 'trash'} onClick={() => handleNavClick('trash')} theme={currentTheme} />}
-          {theme !== 'emerald' && session && (session.user.role === 'admin' || !readOnly) && <NavItem icon={Settings} label="Settings" isActive={activeNav === 'settings'} onClick={() => handleNavClick('settings')} theme={currentTheme} />}
+          <NavItem icon={Home} label={t('nav.home')} isActive={activeNav === 'home'} onClick={() => handleNavClick('home')} theme={currentTheme} />
+          <NavItem icon={Search} label={t('nav.search')} isActive={activeNav === 'search'} onClick={() => handleNavClick('search')} theme={currentTheme} />
+          {session && <NavItem icon={Star} label={t('nav.starred')} isActive={activeNav === 'starred'} onClick={() => handleNavClick('starred')} theme={currentTheme} />}
+          {session && !readOnly && <NavItem icon={Trash2} label={t('nav.trash')} isActive={activeNav === 'trash'} onClick={() => handleNavClick('trash')} theme={currentTheme} />}
+          {theme !== 'emerald' && session && (session.user.role === 'admin' || !readOnly) && <NavItem icon={Settings} label={t('nav.settings')} isActive={activeNav === 'settings'} onClick={() => handleNavClick('settings')} theme={currentTheme} />}
         </nav>
 
         <div className="px-3 mb-2 mt-2 flex justify-between items-center">
-          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Files</h3>
+          <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('files.title')}</h3>
           {!readOnly && (
               <div className="flex items-center space-x-2">
                   <Tooltip>
@@ -608,7 +610,7 @@ export function Sidebar({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>New File</p>
+                      <p>{t('files.newFile')}</p>
                     </TooltipContent>
                   </Tooltip>
                   <Tooltip>
@@ -618,7 +620,7 @@ export function Sidebar({
                       </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>New Folder</p>
+                      <p>{t('files.newFolder')}</p>
                     </TooltipContent>
                   </Tooltip>
               </div>
@@ -656,7 +658,7 @@ export function Sidebar({
                   </button>
               </div>
           ) : (
-              <Button onClick={() => signIn()} className="w-full">Sign In</Button>
+              <Button onClick={() => signIn()} className="w-full">{t('action.signIn')}</Button>
           )}
         </div>
 
@@ -664,11 +666,9 @@ export function Sidebar({
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{createType === 'file' ? 'Create New File' : 'Create New Folder'}</DialogTitle>
+              <DialogTitle>{createType === 'file' ? t('dialog.createFile.title') : t('dialog.createFolder.title')}</DialogTitle>
               <DialogDescription>
-                {createType === 'file' 
-                  ? 'Enter a name for your new file. (e.g. "new-feature")' 
-                  : 'Enter a name for your new folder. (e.g. "components")'}
+                {createType === 'file' ? t('dialog.createFile.desc') : t('dialog.createFolder.desc')}
               </DialogDescription>
             </DialogHeader>
             <Input 
@@ -683,8 +683,8 @@ export function Sidebar({
               }}
             />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-              <Button onClick={submitCreate}>Create</Button>
+              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>{t('action.cancel')}</Button>
+              <Button onClick={submitCreate}>{t('action.create')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -693,12 +693,12 @@ export function Sidebar({
         <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Rename</DialogTitle>
+              <DialogTitle>{t('dialog.rename.title')}</DialogTitle>
             </DialogHeader>
             <Input value={renameInput} onChange={(e) => setRenameInput(e.target.value)} />
             <DialogFooter>
-              <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
-              <Button onClick={submitRename}>Rename</Button>
+              <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>{t('action.cancel')}</Button>
+              <Button onClick={submitRename}>{t('action.rename')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -707,9 +707,9 @@ export function Sidebar({
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Delete {targetNode?.data?.name || 'item'}?</DialogTitle>
+              <DialogTitle>{t('dialog.delete.title', { name: targetNode?.data?.name || '' })}</DialogTitle>
               <DialogDescription>
-                Move to Trash to restore later, or permanently delete.
+                {t('dialog.delete.desc')}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-2">
@@ -719,7 +719,7 @@ export function Sidebar({
                 onClick={() => setDeleteMode('trash')}
                 className="justify-start"
               >
-                Move to Trash
+                {t('dialog.delete.moveToTrash')}
               </Button>
               <Button
                 type="button"
@@ -727,16 +727,16 @@ export function Sidebar({
                 onClick={() => setDeleteMode('permanent')}
                 className="justify-start"
               >
-                Delete Permanently
+                {t('dialog.delete.permanent')}
               </Button>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>{t('action.cancel')}</Button>
               <Button
                 variant={deleteMode === 'permanent' ? 'destructive' : 'default'}
                 onClick={submitDelete}
               >
-                {deleteMode === 'permanent' ? 'Delete' : 'Move to Trash'}
+                {deleteMode === 'permanent' ? t('action.delete') : t('dialog.delete.moveToTrash')}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -6,10 +6,12 @@ import { Editor } from '@/components/editor';
 import { HomePage } from '@/components/home-page';
 import { StarredPage } from '@/components/starred-page';
 import { SearchPalette } from '@/components/search-palette';
+import { useI18n } from '@/components/i18n-provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Info } from 'lucide-react';
 
 export default function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t } = useI18n();
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
   const readOnly = true; // Always read-only for preview route
@@ -117,7 +119,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
       <main className="flex-1 flex flex-col overflow-hidden h-full">
         {currentFile ? (
             loading ? (
-                <div className="flex items-center justify-center h-full">Loading...</div>
+                <div className="flex items-center justify-center h-full">{t('home.loading')}</div>
             ) : (
                 <Editor
                     key={currentFile}
